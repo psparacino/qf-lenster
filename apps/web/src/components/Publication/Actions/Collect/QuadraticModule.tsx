@@ -41,7 +41,7 @@ import type { Dispatch, FC } from 'react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
-import { Button, Modal, Spinner, WarningMessage } from 'ui';
+import { Button, Modal, Spinner, WarningMessage, TextArea } from 'ui';
 import { useAccount, useBalance, useContractRead, useContractWrite, useSignTypedData } from 'wagmi';
 
 import TipsOutlineIcon from '../../../Shared/TipIcons/TipsOutlineIcon';
@@ -104,6 +104,7 @@ const QuadraticModule: FC<Props> = ({ count, setCount, publication, electedMirro
   const [allAllowancesLoading, setAllAllowancesLoading] = useState(true);
   const [postTipTotal, setPostTipTotal] = useState(0);
   const [readyToDisplay, setReadyToDisplay] = useState(false);
+  const [roundError, setRoundError] = useState(false);
 
   useEffect(() => {
     const fetchPostInfo = async () => {
@@ -152,36 +153,51 @@ const QuadraticModule: FC<Props> = ({ count, setCount, publication, electedMirro
 
   useEffect(() => {
     async function fetchRoundInfo(grantsRound: string) {
-      const roundInfo = await getRoundInfo(grantsRound);
-      return roundInfo;
+      try {
+        const roundInfo = await getRoundInfo(grantsRound);
+        return roundInfo;
+      } catch (error) {
+        console.error('Error fetching round info:', error);
+        return null;
+      }
+    }
+
+    async function updateCollectModule() {
+      const res = await refetch();
+      if (res) {
+        const { currency, referral, grantsRoundAddress } = res.data as {
+          currency: string;
+          referral: number;
+          grantsRoundAddress: string;
+        };
+        const round = await fetchRoundInfo(grantsRoundAddress);
+        if (round) {
+          const roundEnd = new Date(round.roundEndTime * 1000);
+          const roundVotingStrategyAddress = round.votingStrategy.id;
+          setCollectModule({
+            __typename: 'UnknownCollectModuleSettings',
+            type: CollectModules.UnknownCollectModule,
+            referralFee: referral,
+            contractAddress: getEnvConfig().QuadraticVoteCollectModuleAddress,
+            followerOnly: false,
+            endTimestamp: roundEnd,
+            votingStrategy: roundVotingStrategyAddress,
+            grantsRound: grantsRoundAddress,
+            // alert, will need custom function/api here for this info as this data doesn't exist on UnkownCollectModuleSettings, esp for mumbai
+            amount: {
+              __typename: 'ModuleFeeAmount',
+              value: '.0001',
+              asset: { __typename: 'Erc20', symbol: 'WMATIC', decimals: 18, address: currency }
+            }
+          });
+        } else {
+          setRoundError(true);
+        }
+      }
     }
 
     if (!isFetching && collectModule === quadraticModuleSettings) {
-      refetch().then((res: { data: any }) => {
-        if (res) {
-          const { currency, referral, grantsRoundAddress } = res.data;
-          fetchRoundInfo(grantsRoundAddress).then((round) => {
-            const roundEnd = new Date(round.roundEndTime * 1000);
-            const roundVotingStrategyAddress = round.votingStrategy.id;
-            setCollectModule({
-              __typename: 'UnknownCollectModuleSettings',
-              type: CollectModules.UnknownCollectModule,
-              referralFee: referral,
-              contractAddress: getEnvConfig().QuadraticVoteCollectModuleAddress,
-              followerOnly: false,
-              endTimestamp: roundEnd,
-              votingStrategy: roundVotingStrategyAddress,
-              grantsRound: grantsRoundAddress,
-              // alert, will need custom function/api here for this info as this data doesn't exist on UnkownCollectModuleSettings, esp for mumbai
-              amount: {
-                __typename: 'ModuleFeeAmount',
-                value: '.0001',
-                asset: { __typename: 'Erc20', symbol: 'WMATIC', decimals: 18, address: currency }
-              }
-            });
-          });
-        }
-      });
+      updateCollectModule();
     }
   }, [isFetching, collectModule, refetch]);
 
@@ -438,14 +454,20 @@ const QuadraticModule: FC<Props> = ({ count, setCount, publication, electedMirro
           ) : null)}
       </div>
 
-      <AllowanceButton
-        title="Allow collect module"
-        module={allowanceData?.approvedModuleAllowanceAmount[0] as ApprovedAllowanceAmount}
-        allowed={allowed}
-        setAllowed={setAllowed}
-        readyToDisplay={readyToDisplay}
-        {...(collectModule ? { collectModule: collectModule } : {})}
-      />
+      {roundError ? (
+        <div className="flex w-full items-center justify-center">
+          <h2 className="text-2xl font-bold text-red-500">NO ROUND FOUND</h2>
+        </div>
+      ) : (
+        <AllowanceButton
+          title="Allow collect module"
+          module={allowanceData?.approvedModuleAllowanceAmount[0] as ApprovedAllowanceAmount}
+          allowed={allowed}
+          setAllowed={setAllowed}
+          readyToDisplay={readyToDisplay}
+          {...(collectModule ? { collectModule: collectModule } : {})}
+        />
+      )}
       <div className="space-y-1.5 pb-2">
         {publication?.metadata?.name && (
           <div className="text-xl font-bold">{publication?.metadata?.name}</div>
