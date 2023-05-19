@@ -111,29 +111,31 @@ export const summarizeQFContributions = async (
  *
  * @param {ChainId} chainId - The id of the chain to fetch the votes from.
  * @param {string} votingStrategyId - The id of the voting strategy to retrieve votes for.
- * @param {string} lastID - The id of the last vote retrieved in the previous iteration of the function. Used for pagination.
+ * @param {string} lastCreatedAt - The createdAt timestamp of the most recent vote retrieved in the previous iteration of the function. Used for pagination.
  * @param {QFContribution[]} votes - An array of QFContribution objects representing the votes retrieved in previous iterations of the function. Used for pagination.
  * @return {Promise<QFContribution[]>} - An array of QFContribution objects representing the votes made in the specified round.
  */
 export const fetchQFContributionsForRound = async (
   chainId: ChainId,
   votingStrategyId: string,
-  lastID: string = '',
+  lastCreatedAt: string = '0',
   votes: QFContribution[] = []
 ): Promise<QFContribution[]> => {
-  // TODO: Add pagination support on createdAt
   const query = `
-    query GetContributionsForRound($votingStrategyId: String, $lastID: String) {
+    query GetContributionsForRound($votingStrategyId: String, $lastCreatedAt: String) {
       votingStrategies(where:{
         id: $votingStrategyId
       }) {
-        votes(first: 1000) {
+        votes(first: 1000, orderBy: createdAt, orderDirection: desc, where: {
+          createdAt_gt: $lastCreatedAt
+        }) {
           id
           amount
           token
           from
           to
           projectId
+          createdAt
         }
         round {
           roundStartTime
@@ -149,7 +151,7 @@ export const fetchQFContributionsForRound = async (
 
     }
   `;
-  const variables = { votingStrategyId, lastID };
+  const variables = { votingStrategyId, lastCreatedAt };
 
   const response = await fetchFromGraphQL(chainId, query, variables);
 
@@ -203,17 +205,10 @@ export const fetchQFContributionsForRound = async (
     }
   });
 
-  // if (response.data?.votingStrategies[0]?.votes === 0) {
-  //   return votes;
-  // }
-  return votes;
-
   return await fetchQFContributionsForRound(
     chainId,
     votingStrategyId,
-    response.data?.votingStrategies[0]?.votes[
-      response.data?.votingStrategies[0]?.votes.length - 1
-    ].id,
+    response.data?.votingStrategies[0]?.votes[0].createdAt,
     votes
   );
 };
