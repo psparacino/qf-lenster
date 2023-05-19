@@ -36,6 +36,7 @@ export type QFVotedEvent = {
   token: string;
   from: string;
   id: string;
+  projectId: string;
 };
 
 export type QFDistribution = {

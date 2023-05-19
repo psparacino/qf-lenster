@@ -1,6 +1,6 @@
 /* eslint-disable prefer-destructuring,unicorn/no-array-for-each */
 import { BigNumber, ethers } from 'ethers';
-import { formatUnits, getAddress } from 'ethers/lib/utils';
+import { formatUnits } from 'ethers/lib/utils';
 
 import type {
   ChainId,
@@ -121,19 +121,19 @@ export const fetchQFContributionsForRound = async (
   lastID: string = '',
   votes: QFContribution[] = []
 ): Promise<QFContribution[]> => {
+  // TODO: Add pagination support on createdAt
   const query = `
     query GetContributionsForRound($votingStrategyId: String, $lastID: String) {
       votingStrategies(where:{
         id: $votingStrategyId
       }) {
-        votes(first: 1000, where: {
-            id_gt: $lastID
-        }) {
+        votes(first: 1000) {
           id
           amount
           token
           from
           to
+          projectId
         }
         round {
           roundStartTime
@@ -164,30 +164,49 @@ export const fetchQFContributionsForRound = async (
 
   const projectsMetaPtr: MetaPtr =
     response.data?.votingStrategies[0]?.round.projectsMetaPtr;
-  const projectPayoutToIdMapping = await fetchPayoutAddressToProjectIdMapping(
-    projectsMetaPtr
-  );
+  const projectIdToPayoutAddressMapping =
+    await fetchProjectIdToPayoutAddressMapping(projectsMetaPtr);
 
   response.data?.votingStrategies[0]?.votes.map((vote: QFVotedEvent) => {
-    const payoutAddress = getAddress(vote.to.toLowerCase());
+    let projectId: string | undefined;
+    try {
+      projectId = ethers.utils.parseBytes32String(vote.projectId.toLowerCase());
+    } catch (error) {
+      console.log('error', 'invalid project id', vote.projectId);
+    }
 
-    const projectId = projectPayoutToIdMapping.get(payoutAddress);
+    if (!projectId) {
+      return;
+    }
+    console.log('project id', projectId);
 
-    if (projectId && payoutAddress) {
+    const payoutAddress = projectIdToPayoutAddressMapping.get(projectId);
+
+    if (!payoutAddress) {
+      console.log(
+        'error',
+        'invalid payout address',
+        vote.projectId,
+        payoutAddress
+      );
+      return;
+    }
+
+    if (projectId) {
       votes.push({
         amount: BigNumber.from(vote.amount),
         token: vote.token,
         contributor: vote.from,
         projectId: projectId,
-        projectPayoutAddress: vote.to
+        projectPayoutAddress: payoutAddress
       });
-    } else {
-      // console.error(
-      //   "vote has invalid project 'id' or payout 'to' address",
-      //   vote
-      // );
     }
   });
+
+  // if (response.data?.votingStrategies[0]?.votes === 0) {
+  //   return votes;
+  // }
+  return votes;
 
   return await fetchQFContributionsForRound(
     chainId,

@@ -246,6 +246,7 @@ export const fetchPayoutAddressToProjectIdMapping = async (
   const payoutToProjectMap: Map<string, string> = new Map();
 
   let projects: ProjectMetaPtr[] = await fetchFromIPFS(pointer);
+  console.log('projects', projects);
 
   projects = projects.filter((project) => project.status === 'APPROVED');
 
@@ -412,8 +413,12 @@ export const fetchRoundMetadata = async (
   const response = await fetchFromGraphQL(chainId, query, variables);
   const data = response.data?.rounds[0];
 
+  console.log('Round graphql data', data);
+
   // fetch round metadata
   const roundMetadata = await fetchFromIPFS(data?.roundMetaPtr.pointer);
+
+  console.log('IPFS metadata', roundMetadata);
   const totalPot = roundMetadata.matchingFunds.matchingFundsAvailable;
   const matchingCapPercentage = roundMetadata.matchingFunds.matchingCapAmount;
   const strategyName = getStrategyName(data?.votingStrategy.strategyName);
@@ -455,9 +460,13 @@ export const fetchProjectIdToPayoutAddressMapping = async (
     payoutAddress: string;
   };
 
-  const pointer = projectsMetaPtr.pointer;
+  const pointer = projectsMetaPtr?.pointer;
 
   const projectToPayoutMap: Map<string, string> = new Map();
+  if (!pointer) {
+    console.log('No projects meta pointer found');
+    return projectToPayoutMap;
+  }
 
   let projects: ProjectMetaPtr[] = await fetchFromIPFS(pointer);
 
