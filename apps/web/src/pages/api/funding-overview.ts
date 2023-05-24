@@ -5,9 +5,20 @@ import {
   fetchQFContributionsForRound,
   matchQFContributions
 } from '../../linear-qf';
-import type { RoundMetadata } from '../../linear-qf/types';
+import type {
+  QFContribution,
+  QFDistributionResults,
+  RoundMetadata
+} from '../../linear-qf/types';
 import { ChainId } from '../../linear-qf/types';
 import { fetchRoundMetadata } from '../../linear-qf/utils';
+
+export interface OverviewResult {
+  roundId: string;
+  roundMetaData: RoundMetadata;
+  contributions: QFContribution[];
+  distributionResults: QFDistributionResults;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -73,7 +84,10 @@ export default async function handler(
   //   res.status(500).json({ message: error?.toString?.() || 'Unknown error' });
   // }
 
-  res
-    .status(200)
-    .json({ roundId, roundMetaData, contributions, distributionResults });
+  res.status(200).json(<OverviewResult>{
+    roundId,
+    roundMetaData,
+    contributions,
+    distributionResults
+  });
 }
