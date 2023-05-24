@@ -60,6 +60,8 @@ export type RoundMetadata = {
   token: string;
   totalPot: number;
   matchingCapPercentage?: number;
+  name: string;
+  description: string;
 };
 
 export type QFDistributionResults = {

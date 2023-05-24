@@ -1,20 +1,39 @@
+import MetaTags from '@components/Common/MetaTags';
+import { t } from '@lingui/macro';
 import axios from 'axios';
+import { APP_NAME } from 'data';
 import { useUserProfilesQuery } from 'lens';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { Card, GridItemEight, GridLayout, Spinner } from 'ui';
+import { Card, GridItemEight, GridItemFour, GridLayout, Spinner } from 'ui';
 
+import type { RoundMetadata } from '../../linear-qf/types';
+import { ChainId } from '../../linear-qf/types';
+import { fetchRoundMetadata } from '../../linear-qf/utils';
 import type { OverviewResult } from '../api/funding-overview';
 
+const MetaData = () => {
+  return (
+    <MetaTags
+      title={t`QF Funding Overview • ${APP_NAME}`}
+      description={`Overview of the QF funding round`}
+    />
+  );
+};
+
 const LinearQfOverview = () => {
+  const {
+    query: { id }
+  } = useRouter();
+
   const [loading, setLoading] = useState<boolean>(true);
   const [roundOverview, setRoundOverview] = useState<
     OverviewResult | undefined
   >();
-  const {
-    query: { id }
-  } = useRouter();
-  console.log(id);
+
+  const [roundMetadata, setRoundMetadata] = useState<
+    RoundMetadata | undefined
+  >();
 
   // Fetch data from the /api/funding-qf-overview endpoint
   useEffect(() => {
@@ -71,34 +90,82 @@ const LinearQfOverview = () => {
     }
   });
 
+  useEffect(() => {
+    fetchRoundMetadata(ChainId.LOCAL_ROUND_LAB, id as string).then((res) => {
+      setRoundMetadata(res);
+    });
+  }, []);
+
   if (loading) {
-    return <Spinner />;
+    return (
+      <>
+        <MetaData />
+        <Spinner />
+      </>
+    );
   }
 
   if (!roundOverview) {
-    return <div>Something went wrong</div>;
+    return (
+      <>
+        <MetaData />
+        <div>Something went wrong</div>;
+      </>
+    );
   }
 
   return (
-    <GridLayout>
-      <GridItemEight>
-        <Card className="p-4">
-          <h1 className="text-lg font-medium">Funding overview for {id}</h1>
-          {roundOverview.distributionResults?.distribution.map((result) => (
-            <Card key={result.projectId} className="mt-4 p-4">
-              <div>{result.projectId}</div>
-              <div># unique contributors {result.uniqueContributorsCount}</div>
-              <div>
-                Total contributions in USD {result.totalContributionsInUSD}
-              </div>
-              <div>Match pool percentage {result.matchPoolPercentage}</div>
-              <div>Match amount in usd {result.matchAmountInUSD}</div>
-              <div>Match amount in token {result.matchAmountInToken}</div>
-            </Card>
-          ))}
-        </Card>
-      </GridItemEight>
-    </GridLayout>
+    <>
+      <MetaData />
+      <GridLayout>
+        <GridItemEight>
+          <Card className="p-4">
+            <h1 className="text-lg font-medium">Funding overview for {id}</h1>
+            {roundOverview.distributionResults?.distribution.map((result) => (
+              <Card key={result.projectId} className="mt-4 p-4">
+                <div>{result.projectId}</div>
+                <div>
+                  # unique contributors {result.uniqueContributorsCount}
+                </div>
+                <div>
+                  Total contributions in USD {result.totalContributionsInUSD}
+                </div>
+                <div>Match pool percentage {result.matchPoolPercentage}</div>
+                <div>Match amount in usd {result.matchAmountInUSD}</div>
+                <div>Match amount in token {result.matchAmountInToken}</div>
+              </Card>
+            ))}
+          </Card>
+        </GridItemEight>
+        <GridItemFour>
+          <Card className="p-4">
+            {roundMetadata ? (
+              <>
+                <h1 className="mb-4 text-lg font-medium">Round metadata</h1>
+                <h2 className="font-medium">{roundMetadata.name}</h2>
+                <div className="p-y-4">{roundMetadata.description}</div>
+                <div className="mt-4">
+                  Round start date{' '}
+                  {new Date(
+                    roundMetadata.roundStartTime * 1000
+                  ).toLocaleDateString()}
+                </div>
+                <div>
+                  Round end date{' '}
+                  {new Date(
+                    roundMetadata.roundEndTime * 1000
+                  ).toLocaleDateString()}
+                </div>
+                <div className="mt-4">Token address {roundMetadata.token}</div>
+                <div>Total pot {roundMetadata.totalPot}</div>
+              </>
+            ) : (
+              <Spinner />
+            )}
+          </Card>
+        </GridItemFour>
+      </GridLayout>
+    </>
   );
 };
 
