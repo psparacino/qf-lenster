@@ -7,9 +7,6 @@ import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { Card, GridItemEight, GridItemFour, GridLayout, Spinner } from 'ui';
 
-import type { RoundMetadata } from '../../linear-qf/types';
-import { ChainId } from '../../linear-qf/types';
-import { fetchRoundMetadata } from '../../linear-qf/utils';
 import type { OverviewResult } from '../api/funding-overview';
 
 const MetaData = () => {
@@ -29,10 +26,6 @@ const LinearQfOverview = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [roundOverview, setRoundOverview] = useState<
     OverviewResult | undefined
-  >();
-
-  const [roundMetadata, setRoundMetadata] = useState<
-    RoundMetadata | undefined
   >();
 
   // Fetch data from the /api/funding-qf-overview endpoint
@@ -90,12 +83,6 @@ const LinearQfOverview = () => {
     }
   });
 
-  useEffect(() => {
-    fetchRoundMetadata(ChainId.LOCAL_ROUND_LAB, id as string).then((res) => {
-      setRoundMetadata(res);
-    });
-  }, []);
-
   if (loading) {
     return (
       <>
@@ -139,25 +126,31 @@ const LinearQfOverview = () => {
         </GridItemEight>
         <GridItemFour>
           <Card className="p-4">
-            {roundMetadata ? (
+            {roundOverview ? (
               <>
                 <h1 className="mb-4 text-lg font-medium">Round metadata</h1>
-                <h2 className="font-medium">{roundMetadata.name}</h2>
-                <div className="p-y-4">{roundMetadata.description}</div>
+                <h2 className="font-medium">
+                  {roundOverview.roundMetaData.name}
+                </h2>
+                <div className="p-y-4">
+                  {roundOverview.roundMetaData.description}
+                </div>
                 <div className="mt-4">
                   Round start date{' '}
                   {new Date(
-                    roundMetadata.roundStartTime * 1000
+                    roundOverview.roundMetaData.roundStartTime * 1000
                   ).toLocaleDateString()}
                 </div>
                 <div>
                   Round end date{' '}
                   {new Date(
-                    roundMetadata.roundEndTime * 1000
+                    roundOverview.roundMetaData.roundEndTime * 1000
                   ).toLocaleDateString()}
                 </div>
-                <div className="mt-4">Token address {roundMetadata.token}</div>
-                <div>Total pot {roundMetadata.totalPot}</div>
+                <div className="mt-4">
+                  Token address {roundOverview.roundMetaData.token}
+                </div>
+                <div>Total pot {roundOverview.roundMetaData.totalPot}</div>
               </>
             ) : (
               <Spinner />
