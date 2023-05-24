@@ -157,6 +157,13 @@ const LinearQfOverview = () => {
             )}
           </Card>
         </GridItemFour>
+        <GridItemEight>
+          <Card className="p-4">
+            <code>
+              <pre>{JSON.stringify(roundOverview, null, 2)}</pre>
+            </code>
+          </Card>
+        </GridItemEight>
       </GridLayout>
     </>
   );
