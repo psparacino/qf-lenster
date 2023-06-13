@@ -10,38 +10,20 @@ import getSnapshotProposalId from 'lib/getSnapshotProposalId';
 import getURLs from 'lib/getURLs';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { Dispatch, FC, SetStateAction } from 'react';
-import { useEffect } from 'react';
+import type { FC } from 'react';
 
 import DecryptedPublicationBody from './DecryptedPublicationBody';
 
 interface PublicationBodyProps {
   publication: Publication;
-  setTippingEnabled?: Dispatch<SetStateAction<boolean>>;
 }
 
-const PublicationBody: FC<PublicationBodyProps> = ({ publication, setTippingEnabled }) => {
+const PublicationBody: FC<PublicationBodyProps> = ({ publication }) => {
   const { pathname } = useRouter();
   const showMore = publication?.metadata?.content?.length > 450 && pathname !== '/posts/[id]';
   const hasURLs = getURLs(publication?.metadata?.content)?.length > 0;
   const snapshotProposalId = hasURLs && getSnapshotProposalId(getURLs(publication?.metadata?.content)[0]);
   let content = publication?.metadata?.content;
-
-  useEffect(() => {
-    function hasNotificationString(input: string): boolean {
-      const pattern = /Your post will be included in the 0x[\dA-Fa-f]{40} round\./;
-      return pattern.test(input);
-    }
-
-    if (setTippingEnabled) {
-      if (content && hasNotificationString(content)) {
-        setTippingEnabled(true);
-      } else {
-        setTippingEnabled(false);
-      }
-    }
-  }, [content, setTippingEnabled]);
-
   if (snapshotProposalId) {
     content = content?.replace(getURLs(publication?.metadata?.content)[0], '');
   }

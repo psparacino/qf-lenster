@@ -72,8 +72,7 @@ import { Button, Card, ErrorMessage, Spinner } from 'ui';
 import { v4 as uuid } from 'uuid';
 import { useContractWrite, useProvider, useSigner, useSignTypedData } from 'wagmi';
 
-import { Editor } from './Editor';
-// import RoundBanner from './Editor/bannernode';
+import Editor from './Editor';
 
 const Attachment = dynamic(() => import('@components/Composer/Actions/Attachment'), {
   loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
@@ -88,10 +87,6 @@ const ReferenceSettings = dynamic(() => import('@components/Composer/Actions/Ref
   loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 const AccessSettings = dynamic(() => import('@components/Composer/Actions/AccessSettings'), {
-  loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
-});
-
-const SelectRoundSettings = dynamic(() => import('@components/Composer/Actions/SelectRoundSettings'), {
   loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />
 });
 
@@ -144,7 +139,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const [editor] = useLexicalComposerContext();
   const provider = useProvider();
   const { data: signer } = useSigner();
-  const [selectedQuadraticRound, setSelectedQuadraticRound] = useState<string>('');
 
   const isComment = Boolean(publication);
   const hasAudio = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.original.mimeType);
@@ -574,11 +568,10 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   return (
     <Card className={clsx({ 'rounded-none border-none': !isComment }, 'pb-3')}>
       {error && <ErrorMessage className="mb-3" title={t`Transaction failed!`} error={error} />}
-      <Editor selectedQuadraticRound={selectedQuadraticRound} />
+      <Editor />
       {publicationContentError && (
         <div className="mt-1 px-5 pb-3 text-sm font-bold text-red-500">{publicationContentError}</div>
       )}
-
       <div className="block items-center px-5 sm:flex">
         <div className="flex items-center space-x-4">
           <Attachment />
@@ -586,10 +579,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
           <CollectSettings publication={publication} />
           <ReferenceSettings />
           <AccessSettings />
-          <SelectRoundSettings
-            selectedQuadraticRound={selectedQuadraticRound}
-            setSelectedQuadraticRound={setSelectedQuadraticRound}
-          />
         </div>
         <div className="ml-auto pt-2 sm:pt-0">
           <Button

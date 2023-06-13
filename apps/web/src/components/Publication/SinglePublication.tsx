@@ -2,7 +2,6 @@ import ActionType from '@components/Home/Timeline/EventType';
 import type { ElectedMirror, FeedItem, Publication } from 'lens';
 import { useRouter } from 'next/router';
 import type { FC } from 'react';
-import { useState } from 'react';
 
 import PublicationActions from './Actions';
 import ModAction from './Actions/ModAction';
@@ -29,7 +28,6 @@ const SinglePublication: FC<SinglePublicationProps> = ({
   showThread = true
 }) => {
   const { push } = useRouter();
-  const [tippingEnabled, setTippingEnabled] = useState(false);
   const firstComment = feedItem?.comments && feedItem.comments[0];
   const rootPublication = feedItem ? (firstComment ? firstComment : feedItem?.root) : publication;
 
@@ -56,12 +54,11 @@ const SinglePublication: FC<SinglePublicationProps> = ({
           <HiddenPublication type={publication.__typename} />
         ) : (
           <>
-            <PublicationBody publication={rootPublication} setTippingEnabled={setTippingEnabled} />
+            <PublicationBody publication={rootPublication} />
             {showActions && (
               <PublicationActions
                 publication={rootPublication}
                 electedMirror={feedItem?.electedMirror as ElectedMirror}
-                tippingEnabled={tippingEnabled}
               />
             )}
             {showModActions && <ModAction publication={rootPublication} className="mt-3 max-w-md" />}
