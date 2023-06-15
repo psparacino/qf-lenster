@@ -38,11 +38,6 @@ interface Props {
   selectedQuadraticRound: string;
 }
 
-interface BannerProps {
-  selectedQuadraticRound: string;
-  editor: LexicalEditor;
-}
-
 let editor: LexicalEditor;
 
 function GrabEditor() {
@@ -56,7 +51,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
   const attachments = usePublicationStore((state) => state.attachments);
   const { handleUploadAttachments } = useUploadAttachments();
   const prevQuadraticRoundRef = useRef('');
-  const [roundNotifications, setRoundNotifications] = useState<string>('');
+
   focusManager;
 
   const handlePaste = async (pastedFiles: FileList) => {
