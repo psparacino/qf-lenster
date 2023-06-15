@@ -72,8 +72,7 @@ import { Button, Card, ErrorMessage, Spinner } from 'ui';
 import { v4 as uuid } from 'uuid';
 import { useContractWrite, useProvider, useSigner, useSignTypedData } from 'wagmi';
 
-import { Editor } from './Editor';
-// import RoundBanner from './Editor/bannernode';
+import Editor from './Editor';
 
 const Attachment = dynamic(() => import('@components/Composer/Actions/Attachment'), {
   loading: () => <div className="shimmer mb-1 h-5 w-5 rounded-lg" />

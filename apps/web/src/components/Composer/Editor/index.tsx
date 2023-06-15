@@ -18,7 +18,6 @@ import { HashtagPlugin } from '@lexical/react/LexicalHashtagPlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { t, Trans } from '@lingui/macro';
 import { focusManager } from '@tanstack/react-query';
@@ -44,47 +43,18 @@ interface BannerProps {
   editor: LexicalEditor;
 }
 
-const RoundBanner: FC<BannerProps> = ({ selectedQuadraticRound, editor }) => {
-  const prevQuadraticRoundRef = useRef('');
-  const [roundNotifications, setRoundNotifications] = useState<string>('');
+let editor: LexicalEditor;
 
-  useEffect(() => {
-    const prevQuadraticRound = prevQuadraticRoundRef.current;
-
-    if (selectedQuadraticRound !== prevQuadraticRound) {
-      const newNotification = `Your post will be included in the ${selectedQuadraticRound} round.`;
-      editor.update(() => {
-        const p = $createParagraphNode();
-        const root = $getRoot();
-        root?.clear();
-        p.append($createTextNode(newNotification));
-        root.append(p);
-        console.log('updated', newNotification);
-      });
-      prevQuadraticRoundRef.current = selectedQuadraticRound;
-    }
-    editor.setEditable(false);
-  }, [selectedQuadraticRound, editor]);
-
-  return (
-    <div className="relative">
-      <PlainTextPlugin
-        contentEditable={<ContentEditable className="block min-h-[25px] overflow-auto px-5" />}
-        placeholder={
-          <div className="pointer-events-none absolute top-[2px] whitespace-nowrap px-5 text-gray-400" />
-        }
-        ErrorBoundary={() => <div>{Errors.SomethingWentWrong}</div>}
-      />
-    </div>
-  );
-};
+function GrabEditor() {
+  [editor] = useLexicalComposerContext();
+  return null;
+}
 
 const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
   const publicationContent = usePublicationStore((state) => state.publicationContent);
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
   const attachments = usePublicationStore((state) => state.attachments);
   const { handleUploadAttachments } = useUploadAttachments();
-  const [editor] = useLexicalComposerContext();
   const prevQuadraticRoundRef = useRef('');
   const [roundNotifications, setRoundNotifications] = useState<string>('');
   focusManager;
@@ -99,6 +69,29 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
     }
   };
 
+  useEffect(() => {
+    const prevQuadraticRound = prevQuadraticRoundRef.current;
+
+    if (selectedQuadraticRound !== prevQuadraticRound) {
+      const newNotification = ` Your post will be included in the ${selectedQuadraticRound} round.`;
+      editor.update(() => {
+        const p = $createParagraphNode();
+        const root = $getRoot();
+        const textNodes = root.getAllTextNodes();
+        textNodes.map((e) => {
+          if (e.getTextContent().includes('Your post will be included in the')) {
+            e.remove();
+          }
+        });
+        p.append($createTextNode(newNotification).setMode('token'));
+        root.append(p);
+      });
+      prevQuadraticRoundRef.current = selectedQuadraticRound;
+    }
+
+    // editor.setEditable(false);
+  }, [selectedQuadraticRound, editor]);
+
   return (
     <div className="relative">
       <LexicalComposer
@@ -111,6 +104,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
           nodes: [EmojiNode, HashtagNode, AutoLinkNode]
         }}
       >
+        <GrabEditor />
         <EmojiPickerPlugin />
         <ToolbarPlugin />
         <AutoFocusPlugin />
@@ -141,9 +135,8 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
         <ImagesPlugin onPaste={handlePaste} />
         <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       </LexicalComposer>
-      <RoundBanner selectedQuadraticRound={selectedQuadraticRound} editor={editor} />
     </div>
   );
 };
 
-export { Editor, RoundBanner };
+export default Editor;
