@@ -25,7 +25,7 @@ import Errors from 'data/errors';
 import type { LexicalCommand, LexicalEditor } from 'lexical';
 import { $createParagraphNode, $createTextNode, $getRoot, createCommand } from 'lexical';
 import type { FC } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
 
