@@ -1,15 +1,14 @@
 // import type { Publication } from 'lens';
 // import type { Dispatch, FC, ReactNode, SetStateAction } from 'react';
 import {
-  getRoundUserData,
   getCurrentActiveRounds,
+  getRoundUserData,
   getUserQuadraticTippingData
 } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
 import TipsOutlineIcon from '@components/Shared/TipIcons/TipsOutlineIcon';
 import { ethers } from 'ethers';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
-import { Card } from 'ui';
 import { useAccount } from 'wagmi';
 
 type Round = {
