@@ -25,7 +25,7 @@ import Errors from 'data/errors';
 import type { LexicalCommand, LexicalEditor } from 'lexical';
 import { $createParagraphNode, $createTextNode, $getRoot, createCommand } from 'lexical';
 import type { FC } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
 
@@ -44,13 +44,15 @@ function GrabEditor() {
   [editor] = useLexicalComposerContext();
   return null;
 }
-
+let newNotification: string;
 const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
   const publicationContent = usePublicationStore((state) => state.publicationContent);
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
   const attachments = usePublicationStore((state) => state.attachments);
   const { handleUploadAttachments } = useUploadAttachments();
   const prevQuadraticRoundRef = useRef('');
+  const [bannerWarning, setBannerWarning] = useState('');
+  // const [newNotification, setNewNotification] = useState('');
 
   focusManager;
 
@@ -66,25 +68,24 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
 
   useEffect(() => {
     const prevQuadraticRound = prevQuadraticRoundRef.current;
-
     if (selectedQuadraticRound !== prevQuadraticRound) {
-      const newNotification = ` Your post will be included in the ${selectedQuadraticRound} round.`;
+      newNotification = ` Your post will be included in the ${selectedQuadraticRound} round.`;
       editor.update(() => {
         const p = $createParagraphNode();
         const root = $getRoot();
         const textNodes = root.getAllTextNodes();
-        textNodes.map((e) => {
-          if (e.getTextContent().includes('Your post will be included in the')) {
-            e.remove();
-          }
-        });
-        p.append($createTextNode(newNotification).setMode('token'));
-        root.append(p);
+        const textNode = textNodes.find(
+          (e) => e.getMode() === 'token' && e.getTextContent().includes('Your post will be included in the')
+        );
+        if (textNode) {
+          textNode.replace($createTextNode(newNotification).setMode('token'));
+        } else {
+          p.append($createTextNode(newNotification).setMode('token'));
+          root.append(p);
+        }
       });
       prevQuadraticRoundRef.current = selectedQuadraticRound;
     }
-
-    // editor.setEditable(false);
   }, [selectedQuadraticRound, editor]);
 
   return (
