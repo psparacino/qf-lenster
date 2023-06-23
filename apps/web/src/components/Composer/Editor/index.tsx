@@ -56,6 +56,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
     const prevQuadraticRoundRef = useRef('');
     const [newEditor] = useLexicalComposerContext();
     useEffect(() => {
+      newEditor.setEditable(false);
       const prevQuadraticRound = prevQuadraticRoundRef.current;
       if (selectedQuadraticRound !== prevQuadraticRound) {
         const newNotification = `Your post will be included in the ${selectedQuadraticRound} round.`;
@@ -69,7 +70,6 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
         });
         prevQuadraticRoundRef.current = selectedQuadraticRound;
       }
-      newEditor.setEditable(false);
     }, [selectedQuadraticRound, newEditor]);
     return (
       <div className="relative">
