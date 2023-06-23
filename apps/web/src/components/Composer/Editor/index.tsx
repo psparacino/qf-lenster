@@ -45,13 +45,17 @@ function GrabEditor() {
   return null;
 }
 let newNotification: string;
+
 const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
   const publicationContent = usePublicationStore((state) => state.publicationContent);
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
+  const setRoundNotification = usePublicationStore((state) => state.setRoundNotification);
   const attachments = usePublicationStore((state) => state.attachments);
   const { handleUploadAttachments } = useUploadAttachments();
   const prevQuadraticRoundRef = useRef('');
-  const [bannerWarning, setBannerWarning] = useState('');
+
+  const [newEditorState, setNewEditorState] = useState('');
+
   // const [newNotification, setNewNotification] = useState('');
 
   focusManager;
@@ -66,27 +70,37 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
     }
   };
 
-  useEffect(() => {
-    const prevQuadraticRound = prevQuadraticRoundRef.current;
-    if (selectedQuadraticRound !== prevQuadraticRound) {
-      newNotification = ` Your post will be included in the ${selectedQuadraticRound} round.`;
-      editor.update(() => {
-        const p = $createParagraphNode();
-        const root = $getRoot();
-        const textNodes = root.getAllTextNodes();
-        const textNode = textNodes.find(
-          (e) => e.getMode() === 'token' && e.getTextContent().includes('Your post will be included in the')
-        );
-        if (textNode) {
-          textNode.replace($createTextNode(newNotification).setMode('token'));
-        } else {
-          p.append($createTextNode(newNotification).setMode('token'));
+  const RoundBanner: FC = () => {
+    const prevQuadraticRoundRef = useRef('');
+    const [newEditor] = useLexicalComposerContext();
+    useEffect(() => {
+      const prevQuadraticRound = prevQuadraticRoundRef.current;
+      if (selectedQuadraticRound !== prevQuadraticRound) {
+        const newNotification = `Your post will be included in the ${selectedQuadraticRound} round.`;
+        newEditor.update(() => {
+          const p = $createParagraphNode();
+          const root = $getRoot();
+          root?.clear();
+          p.append($createTextNode(newNotification));
           root.append(p);
-        }
-      });
-      prevQuadraticRoundRef.current = selectedQuadraticRound;
-    }
-  }, [selectedQuadraticRound, editor]);
+          setRoundNotification(newNotification);
+        });
+        prevQuadraticRoundRef.current = selectedQuadraticRound;
+      }
+      newEditor.setEditable(false);
+    }, [selectedQuadraticRound, newEditor]);
+    return (
+      <div className="relative">
+        <RichTextPlugin
+          contentEditable={<ContentEditable className="block min-h-[25px] overflow-auto px-5" />}
+          placeholder={
+            <div className="pointer-events-none absolute top-[2px] whitespace-nowrap px-5 text-gray-400" />
+          }
+          ErrorBoundary={() => <div>{Errors.SomethingWentWrong}</div>}
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="relative">
@@ -131,6 +145,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
         <ImagesPlugin onPaste={handlePaste} />
         <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       </LexicalComposer>
+      <RoundBanner />
     </div>
   );
 };

@@ -14,7 +14,6 @@ import type {
   AccessConditionOutput,
   CreatePublicPostRequest
 } from '@lens-protocol/sdk-gated/dist/graphql/types';
-import { $convertFromMarkdownString } from '@lexical/markdown';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import getTextNftUrl from '@lib/getTextNftUrl';
 import getUserLocale from '@lib/getUserLocale';
@@ -116,6 +115,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const videoThumbnail = usePublicationStore((state) => state.videoThumbnail);
   const setVideoThumbnail = usePublicationStore((state) => state.setVideoThumbnail);
   const videoDurationInSeconds = usePublicationStore((state) => state.videoDurationInSeconds);
+  const roundNotification = usePublicationStore((state) => state.roundNotification);
 
   // Transaction persist store
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue);
@@ -189,13 +189,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   useEffect(() => {
     setPublicationContentError('');
   }, [audioPublication]);
-
-  useEffect(() => {
-    editor.update(() => {
-      $convertFromMarkdownString(publicationContent);
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const generateOptimisticPublication = ({ txHash, txId }: { txHash?: string; txId?: string }) => {
     return {
@@ -432,6 +425,10 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       return toast.error(Errors.SignWallet);
     }
 
+    if (roundNotification && !publicationContent.includes(roundNotification)) {
+      setPublicationContent(publicationContent.concat('\n', roundNotification));
+    }
+
     try {
       setLoading(true);
       if (hasAudio) {
@@ -442,7 +439,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
           return setPublicationContentError(issue.message);
         }
       }
-
       if (publicationContent.length === 0 && attachments.length === 0) {
         return setPublicationContentError(`${isComment ? 'Comment' : 'Post'} should not be empty!`);
       }

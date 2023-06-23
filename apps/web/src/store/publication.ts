@@ -28,6 +28,8 @@ interface PublicationState {
   setVideoDurationInSeconds: (videoDurationInSeconds: string) => void;
   isUploading: boolean;
   setIsUploading: (isUploading: boolean) => void;
+  roundNotification: string;
+  setRoundNotification: (roundNotification: string) => void;
 }
 
 export const usePublicationStore = create<PublicationState>((set) => ({
@@ -70,5 +72,7 @@ export const usePublicationStore = create<PublicationState>((set) => ({
   videoDurationInSeconds: '',
   setVideoDurationInSeconds: (videoDurationInSeconds) => set(() => ({ videoDurationInSeconds })),
   isUploading: false,
-  setIsUploading: (isUploading) => set(() => ({ isUploading }))
+  setIsUploading: (isUploading) => set(() => ({ isUploading })),
+  roundNotification: '',
+  setRoundNotification: (roundNotification) => set(() => ({ roundNotification }))
 }));
