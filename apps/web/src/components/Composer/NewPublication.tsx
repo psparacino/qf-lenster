@@ -426,7 +426,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     }
 
     if (roundNotification && !publicationContent.includes(roundNotification)) {
-      setPublicationContent(publicationContent.concat('\n', roundNotification));
+      setPublicationContent(publicationContent.concat('\n', '\n', roundNotification));
     }
 
     try {
