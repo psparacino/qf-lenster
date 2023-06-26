@@ -160,6 +160,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     });
     setPublicationContent('');
     setRoundNotification('');
+    console.log('COMPLETED');
     setAttachments([]);
     setVideoThumbnail({
       url: '',

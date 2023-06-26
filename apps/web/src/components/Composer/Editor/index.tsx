@@ -53,6 +53,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
 
   const RoundBanner: FC = () => {
     const prevQuadraticRoundRef = useRef('');
+    console.log('round notification', roundNotification);
     // const [newEditor] = useLexicalComposerContext();
     useEffect(() => {
       // newEditor.setEditable(false);
@@ -117,6 +118,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
             editorState.read(() => {
               const markdown = $convertToMarkdownString(TRANSFORMERS);
               setPublicationContent(markdown);
+              setRoundNotification(roundNotification);
             });
           }}
         />
