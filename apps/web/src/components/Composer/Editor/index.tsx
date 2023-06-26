@@ -12,7 +12,6 @@ import { $convertToMarkdownString, TEXT_FORMAT_TRANSFORMERS } from '@lexical/mar
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HashtagPlugin } from '@lexical/react/LexicalHashtagPlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
@@ -22,7 +21,6 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { t, Trans } from '@lingui/macro';
 import { focusManager } from '@tanstack/react-query';
 import Errors from 'data/errors';
-import { $createParagraphNode, $createTextNode, $getRoot } from 'lexical';
 import type { FC } from 'react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
@@ -82,13 +80,15 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
           }
           ErrorBoundary={() => <div>{Errors.SomethingWentWrong}</div>}
         /> */}
-        <p className="pl-2">{roundNotification}</p>
+        <p className="text-brand-600 border-brand-400 width !bg-brand-300 mb-1 ml-2 mr-2 rounded-md border pl-2">
+          {roundNotification}
+        </p>
       </div>
     );
   };
 
   return (
-    <div className="relative">
+    <div className="relativ pb-1e">
       <LexicalComposer
         initialConfig={{
           namespace: 'content',
@@ -105,7 +105,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
         <RichTextPlugin
           contentEditable={<ContentEditable className="my-4 block min-h-[65px] overflow-auto px-2" />}
           placeholder={
-            <div className="pointer-events-none absolute top-[65px] whitespace-nowrap px-5 text-gray-400">
+            <div className="pointer-events-none absolute top-[115px] whitespace-nowrap px-5 text-gray-400">
               <Trans>What's happening?</Trans>
             </div>
           }
