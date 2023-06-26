@@ -116,7 +116,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const setVideoThumbnail = usePublicationStore((state) => state.setVideoThumbnail);
   const videoDurationInSeconds = usePublicationStore((state) => state.videoDurationInSeconds);
   const roundNotification = usePublicationStore((state) => state.roundNotification);
-  const setRoundNotification = usePublicationStore((state) => state.setRoundNotification);  
+  const setRoundNotification = usePublicationStore((state) => state.setRoundNotification);
 
   // Transaction persist store
   const txnQueue = useTransactionPersistStore((state) => state.txnQueue);

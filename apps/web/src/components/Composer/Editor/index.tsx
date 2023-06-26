@@ -39,6 +39,7 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
   const setRoundNotification = usePublicationStore((state) => state.setRoundNotification);
   const attachments = usePublicationStore((state) => state.attachments);
   const { handleUploadAttachments } = useUploadAttachments();
+  const roundNotification = usePublicationStore((state) => state.roundNotification);
 
   focusManager;
 
@@ -54,32 +55,34 @@ const Editor: FC<Props> = ({ selectedQuadraticRound }) => {
 
   const RoundBanner: FC = () => {
     const prevQuadraticRoundRef = useRef('');
-    const [newEditor] = useLexicalComposerContext();
+    // const [newEditor] = useLexicalComposerContext();
     useEffect(() => {
-      newEditor.setEditable(false);
+      // newEditor.setEditable(false);
       const prevQuadraticRound = prevQuadraticRoundRef.current;
       if (selectedQuadraticRound !== prevQuadraticRound) {
         const newNotification = `Your post will be included in the ${selectedQuadraticRound} round.`;
-        newEditor.update(() => {
-          const p = $createParagraphNode();
-          const root = $getRoot();
-          root?.clear();
-          p.append($createTextNode(newNotification));
-          root.append(p);
-          setRoundNotification(newNotification);
-        });
+        // newEditor.update(() => {
+        //   const p = $createParagraphNode();
+        //   const root = $getRoot();
+        //   root?.clear();
+        //   p.append($createTextNode(newNotification));
+        //   root.append(p);
+        // });
+        setRoundNotification(newNotification);
         prevQuadraticRoundRef.current = selectedQuadraticRound;
       }
-    }, [selectedQuadraticRound, newEditor]);
+    }, [selectedQuadraticRound]);
+
     return (
       <div className="relative">
-        <RichTextPlugin
+        {/* <RichTextPlugin
           contentEditable={<ContentEditable className="block min-h-[25px] overflow-auto px-5" />}
           placeholder={
             <div className="pointer-events-none absolute top-[2px] whitespace-nowrap px-5 text-gray-400" />
           }
           ErrorBoundary={() => <div>{Errors.SomethingWentWrong}</div>}
-        />
+        /> */}
+        <p className="pl-2">{roundNotification}</p>
       </div>
     );
   };
