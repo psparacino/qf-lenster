@@ -13,9 +13,10 @@ import { useNetwork } from 'wagmi';
 interface Props {
   selectedQuadraticRound: QuadraticRound;
   requirementsStatus: Record<string, boolean>;
+  requirementsMet: boolean;
 }
 
-const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus }) => {
+const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus, requirementsMet }) => {
   const [showModal, setShowModal] = useState(false);
   const { chain } = useNetwork();
 
@@ -54,7 +55,7 @@ const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus 
           aria-label="Get Round Info"
         >
           <div className="text-brand">
-            <LightBulbIcon className="h-5 w-5" color="#8B5CF6" />
+            <LightBulbIcon className="h-5 w-5" color={requirementsMet ? '#8B5CF6' : 'red'} />
           </div>
         </motion.button>
       </Tooltip>
@@ -73,7 +74,7 @@ const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus 
             <h2 className="text-md font-semibold text-purple-500">Match Amount</h2>
             <Link href={polygonScanLink(token, 'token')} target="blank">
               <p className="text-sm hover:text-blue-500">
-                {formatEther(matchAmount)} {getTokenName(token, chain)}
+                {formatEther(matchAmount)} {getTokenName(token)}
               </p>
             </Link>
           </div>

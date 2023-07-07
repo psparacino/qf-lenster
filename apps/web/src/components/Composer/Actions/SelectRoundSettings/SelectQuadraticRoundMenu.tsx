@@ -4,7 +4,6 @@ import { Menu } from '@headlessui/react';
 import { formatEther } from 'ethers/lib/utils.js';
 import type { Dispatch, SetStateAction } from 'react';
 import React from 'react';
-import { useNetwork } from 'wagmi';
 
 interface SelectQuadraticRoundMenuProps {
   setSelectedQuadraticRound: Dispatch<SetStateAction<QuadraticRound>>;
@@ -19,8 +18,6 @@ const SelectQuadraticRoundMenu = ({
   activeRounds,
   setManuallySelectedRound
 }: SelectQuadraticRoundMenuProps) => {
-  const { chain } = useNetwork();
-
   // const dummyDataRound: QuadraticRound = {
   //   name: 'Dummy Data Round',
   //   description: 'This is a dummy quadratic funding round.',
@@ -64,7 +61,7 @@ const SelectQuadraticRoundMenu = ({
                         <div className="mt-2 text-sm">
                           <span className="font-semibold text-gray-800">Matching Amount: </span>
                           <span className="text-gray-600">
-                            {formatEther(round.matchAmount)} {getTokenName(round.token, chain)}
+                            {formatEther(round.matchAmount)} {getTokenName(round.token)}
                           </span>
                         </div>
                         <div className="mt-2 text-sm">

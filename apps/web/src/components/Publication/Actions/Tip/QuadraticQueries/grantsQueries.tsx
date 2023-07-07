@@ -181,6 +181,27 @@ query GetRoundMetaData($pointer: String!) {
   return concatRounds;
 }
 
+export const getRoundMetadata = async (pointer: string) => {
+  const query = `
+    query GetRoundMeta($pointer: String!) {
+      roundMetaData(id: $pointer) {
+        description
+        id
+        name
+        requirements
+        supportEmail
+      }
+    }
+  `;
+  const variables = {
+    pointer
+  };
+
+  const data = await request(query, variables);
+
+  return data.roundMetaData;
+};
+
 export async function getRoundUserData(roundAddress: string, address: string) {
   const query = `
   query getRoundUserData($roundAddressLower: ID!, $addressLower: String!) {

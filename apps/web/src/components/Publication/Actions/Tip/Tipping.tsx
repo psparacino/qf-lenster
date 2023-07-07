@@ -1,6 +1,6 @@
 import Markup from '@components/Shared/Markup';
 import Uniswap from '@components/Shared/UniswapTip';
-import { ClockIcon, MinusIcon, UsersIcon } from '@heroicons/react/outline';
+import { ClockIcon, MinusIcon, PuzzleIcon, UsersIcon, ViewGridAddIcon } from '@heroicons/react/outline';
 import { CheckCircleIcon } from '@heroicons/react/solid';
 import { formatTime } from '@lib/formatTime';
 import getCoingeckoPrice from '@lib/getCoingeckoPrice';
@@ -29,7 +29,7 @@ import {
 } from 'wagmi';
 
 import TipsOutlineIcon from '../../../Shared/TipIcons/TipsOutlineIcon';
-import { getRoundInfo } from './QuadraticQueries/grantsQueries';
+import { getRoundInfo, getRoundMetadata } from './QuadraticQueries/grantsQueries';
 import { encodePublicationId } from './utils';
 
 interface Props {
@@ -41,6 +41,23 @@ interface Props {
   tipTotal: BigNumber;
 }
 
+interface RoundInfo {
+  id: string;
+  payoutStrategy: string;
+  roundEndTime: string;
+  roundStartTime: string;
+  token: string;
+  votingStrategy: {
+    id: string;
+  };
+  metadata: {
+    description: string;
+    name: string;
+    requirements: string[];
+    supportEmail: string;
+  };
+}
+
 const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModal, tipTotal, tipCount }) => {
   const currentProfile = useAppStore((state) => state.currentProfile);
 
@@ -50,7 +67,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
   const [tipAmount, setTipAmount] = useState('0');
   const [inputValue, setInputValue] = useState('');
   const [roundInfoLoaded, setRoundInfoLoaded] = useState(false);
-  const [roundInfo, setRoundInfo] = useState({
+  const [roundInfo, setRoundInfo] = useState<RoundInfo>({
     id: '',
     payoutStrategy: '',
     roundEndTime: '',
@@ -58,6 +75,12 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     token: '',
     votingStrategy: {
       id: ''
+    },
+    metadata: {
+      description: '',
+      name: '',
+      requirements: [],
+      supportEmail: ''
     }
   });
 
@@ -70,7 +93,9 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
       try {
         const round = await getRoundInfo(roundAddress);
         if (round) {
-          setRoundInfo(round);
+          const metadata = await getRoundMetadata(round.roundMetaPtr.pointer);
+          const updatedRoundInfo = { ...round, metadata };
+          setRoundInfo(updatedRoundInfo);
           setRoundInfoLoaded(true);
         }
       } catch (error) {
@@ -356,6 +381,22 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
             <UsersIcon className="lt-text-gray-500 h-4 w-4" />
 
             <div>{humanize(tipCount)} tips</div>
+          </div>
+        </div>
+        <div className="item-center block space-y-1 sm:flex sm:space-x-5">
+          <div className="flex items-center space-x-2">
+            <PuzzleIcon className="lt-text-gray-500 h-4 w-4" />
+
+            <div>Round Name: {roundInfo.metadata.name} </div>
+          </div>
+        </div>
+        <div className="item-center block space-y-1 sm:flex sm:space-x-5">
+          <div className="flex  space-x-2">
+            <ViewGridAddIcon className="lt-text-gray-500 mt-1 h-4 w-4" />
+
+            <div>
+              Round Address: <div className="text-xs">{roundInfo.id} </div>
+            </div>
           </div>
         </div>
         {roundInfo.roundEndTime && (
