@@ -194,9 +194,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     if (__typename === 'RelayError') {
       return;
     }
-    for (const key of notificationKeys) {
-      notificationKeys.pop();
-    }
+    setNotificationKeys([]);
     setSelectedQuadraticRound(defaultRound);
     editor.update(() => {
       $getRoot().clear();
@@ -561,17 +559,17 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     if (notificationText) {
       const index = publicationContent.indexOf(notificationText);
       const newContent = `${publicationContent.slice(0, index)}
-        <span className="bg-red-500"> ${publicationContent.slice(
+        <span className="hidden"> ${publicationContent.slice(
           index,
           index + notificationText.length
-        )} </span>`;
+        )} </span> \n ${publicationContent.slice(index + notificationText.length)}`;
       setPublicationContent(newContent);
+      setNotificationKeys([]);
       setPublicationContentUpdated(true);
     }
   };
 
   const createPublication = async () => {
-    removeUpdateListener();
     if (!currentProfile) {
       return toast.error(Errors.SignWallet);
     }
@@ -708,7 +706,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       createPublication();
       setPublicationContentUpdated(false);
     }
-  }, [publicationContentUpdated]);
+  }, [publicationContentUpdated, setPublicationContentUpdated]);
 
   const setGifAttachment = (gif: IGif) => {
     const attachment: NewLensterAttachment = {
@@ -781,7 +779,9 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
                 <PencilAltIcon className="h-4 w-4" />
               )
             }
-            onClick={insertHtml}
+            onClick={() => {
+              insertHtml();
+            }}
           >
             {isComment ? t`Comment` : t`Post`}
           </Button>

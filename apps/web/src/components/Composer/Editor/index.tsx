@@ -5,6 +5,8 @@ import EmojisPlugin from '@components/Shared/Lexical/Plugins/EmojisPlugin';
 import ImagesPlugin from '@components/Shared/Lexical/Plugins/ImagesPlugin';
 import ToolbarPlugin from '@components/Shared/Lexical/Plugins/ToolbarPlugin';
 import useUploadAttachments from '@components/utils/hooks/useUploadAttachments';
+import type { HashtagNode } from '@lexical/hashtag';
+import { $createHashtagNode } from '@lexical/hashtag';
 import {
   $convertToMarkdownString,
   TEXT_FORMAT_TRANSFORMERS,
@@ -35,8 +37,8 @@ interface Props {
   notificationKeys: string[];
   setNotificationKeys: Dispatch<SetStateAction<string[]>>;
 }
-const findNode = (nodeArray: TextNode[], keyArray: string[]) => {
-  return nodeArray.find((node) => {
+const findNodes = (nodeArray: TextNode[], keyArray: string[]): TextNode[] | undefined => {
+  return nodeArray?.filter((node) => {
     return keyArray.find((key: string) => {
       return key == node.getKey();
     });
@@ -70,8 +72,9 @@ const Editor: FC<Props> = ({ selectedQuadraticRound, editor, notificationKeys, s
     if (showNewPostModal == false) {
       editor.update(() => {
         const root = $getRoot();
-        const notification = findNode(root.getAllTextNodes(), notificationKeys);
-        notification?.remove();
+        const notification = findNodes(root.getAllTextNodes(), notificationKeys);
+        // eslint-disable-next-line unicorn/no-array-for-each
+        notification?.forEach((notification) => notification.remove());
         setNotificationKeys([]);
       });
     }
@@ -89,26 +92,54 @@ const Editor: FC<Props> = ({ selectedQuadraticRound, editor, notificationKeys, s
 
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
         newNotification = `Your post will be included in ${selectedQuadraticRound.name} at address ${selectedQuadraticRound.id}.`;
+        let newHashtagNodes: HashtagNode[];
 
         editor.update(() => {
           const root = $getRoot();
+          const textNodes = root.getAllTextNodes();
+          newHashtagNodes = selectedQuadraticRound.requirements.map((requirement) =>
+            $createHashtagNode(requirement.concat(' ')).setMode('token')
+          );
+          const p = $createParagraphNode();
+
           if (notificationKeys.length > 0) {
-            const notificationNode = findNode(root.getAllTextNodes(), notificationKeys);
+            const notificationNodes = findNodes(textNodes, notificationKeys);
+            console.log(notificationNodes);
             const newTextNode = $createTextNode(newNotification)
               .setMode('token')
               .setStyle(notificationStyles);
-            notificationKeys.splice(
-              notificationKeys.findIndex((key) => key == notificationNode?.getKey()),
-              1
-            );
+            if (notificationNodes) {
+              for (const node of notificationNodes) {
+                console.log('node', node);
+                if (node?.getType() == 'hashtag') {
+                  node.remove();
+                  notificationKeys.splice(
+                    notificationKeys.findIndex((key) => key == node.getKey()),
+                    1
+                  );
+                } else if (node.getType() !== 'hashtag') {
+                  node?.replace(newTextNode);
+                  notificationKeys.splice(
+                    notificationKeys.findIndex((key) => key == node.getKey()),
+                    1
+                  );
+                  // check that hashtag is already in editor
+                }
+              }
+            }
+            if (newHashtagNodes.length > 0) {
+              root.append(p.append(...newHashtagNodes));
+              notificationKeys.push(...newHashtagNodes.map((node) => node.getKey()));
+            }
             notificationKeys.push(newTextNode.getKey());
-            notificationNode?.replace(newTextNode);
           } else {
             const p = $createParagraphNode();
             const textNode = $createTextNode(newNotification).setMode('token').setStyle(notificationStyles);
             notificationKeys.push(textNode.getKey());
-            p.append(textNode);
+            p.append(textNode, ...newHashtagNodes);
             root.append(p);
+
+            notificationKeys.push(...newHashtagNodes.map((node) => node.getKey()));
           }
           toast.success('Your post has been added to a round.');
         });
