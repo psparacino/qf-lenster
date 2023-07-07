@@ -152,7 +152,7 @@ const Editor: FC<Props> = ({
             console.log(notificationKeys);
           }
 
-          toast.success('Your post has been added to a round.');
+          toast.success(roundNotificationText);
         });
       } else {
         editor.update(() => {
