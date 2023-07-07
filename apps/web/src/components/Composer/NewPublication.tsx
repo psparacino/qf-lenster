@@ -572,15 +572,24 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     if (roundNotificationData !== '') {
       const index = publicationContent.indexOf(roundNotificationData);
 
-      const newContent = `${publicationContent.slice(0, index)}${createHtml(
-        roundNotificationData
-      )}${publicationContent.slice(index + roundNotificationData.length)}`.trim();
-
+      const newContent = `${publicationContent}${createHtml(roundNotificationData)}${publicationContent.slice(
+        index + roundNotificationData.length
+      )}`;
       setPublicationContent(newContent);
       setNotificationKeys([]);
       setPublicationContentUpdated(true);
     }
   };
+
+  // const insertHtml = async () => {
+  //   if (roundNotificationData !== '') {
+  //     const newContent = `${publicationContent}${createHtml(roundNotificationData)}`;
+
+  //     setPublicationContent(newContent);
+  //     setNotificationKeys([]);
+  //     setPublicationContentUpdated(true);
+  //   }
+  // };
 
   const createPublication = async () => {
     removeUpdateListener();
