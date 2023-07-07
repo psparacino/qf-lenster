@@ -1,6 +1,6 @@
 import type { QuadraticRound } from '@components/Composer/NewPublication';
 import { getTokenName } from '@components/utils/getTokenName';
-import { LightBulbIcon } from '@heroicons/react/outline';
+import { CheckIcon, LightBulbIcon, XIcon } from '@heroicons/react/outline';
 import { t } from '@lingui/macro';
 import { formatEther } from 'ethers/lib/utils.js';
 import { motion } from 'framer-motion';
@@ -77,19 +77,19 @@ const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus 
               </p>
             </Link>
           </div>
-          {(requirements.length !== 0 || requirements[0] !== '') && (
+          {requirements.length !== 0 && requirements[0] !== '' && (
             <div className="mb-4 border-b border-purple-200 pb-4">
               <h2 className="text-md font-semibold text-purple-500">Round Required Text</h2>
               <ul>
                 {Object.entries(requirementsStatus).map(([requirement, isMet]) => (
                   <li key={requirement}>
-                    <div className=" flex items-center">
-                      {requirement}:{' '}
+                    <div className="flex items-center">
                       {isMet ? (
-                        <div className="ml-2 italic text-green-500">requirement met!</div>
+                        <CheckIcon className="mr-2 h-5 w-5 text-green-500" />
                       ) : (
-                        <div className="ml-2 text-red-500">requirement not met</div>
+                        <XIcon className="mr-2 h-5 w-5 text-red-500" />
                       )}
+                      {requirement}
                     </div>
                   </li>
                 ))}
