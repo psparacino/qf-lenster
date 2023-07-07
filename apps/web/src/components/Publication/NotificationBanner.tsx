@@ -1,4 +1,5 @@
 import TipsSolidIcon from '@components/Shared/TipIcons/TipsSolidIcon';
+import { getTokenName } from '@components/utils/getTokenName';
 import { QuestionMarkCircleIcon } from '@heroicons/react/outline';
 import { ethers } from 'ethers';
 import type { Publication } from 'lens';
@@ -20,17 +21,19 @@ export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAdd
   const [votes, setVotes] = useState<any>([]);
   const [postTipTotal, setPostTipTotal] = useState(0);
   const [roundEnd, setRoundEnd] = useState(0);
+  const [roundToken, setRoundToken] = useState<string>('');
 
   // Add check here if Post or Comment for getting roundInfo
   useEffect(() => {
     const getPostInfo = async () => {
       if (roundAddress) {
         const roundResults = await getPostQuadraticTipping(publication.id, roundAddress);
-        const { roundEndTime } = await getRoundInfo(roundAddress);
+        const { roundEndTime, token } = await getRoundInfo(roundAddress);
 
         if (!roundResults) {
           return;
         }
+        setRoundToken(token);
         setRoundEnd(roundEndTime);
         setRoundInfo(roundResults);
         const votes = roundResults?.votes || [];
@@ -82,8 +85,8 @@ export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAdd
         </div>
 
         <div>
-          This post has received {ethers.utils.formatEther(postTipTotal)} in tips from {uniqueCollectors}{' '}
-          users.
+          This post has received {ethers.utils.formatEther(postTipTotal)} {getTokenName(roundToken)} in tips
+          from {uniqueCollectors} users.
         </div>
         {roundInfo && (
           <div className="flex justify-between pt-3">
