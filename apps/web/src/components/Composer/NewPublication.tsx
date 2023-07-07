@@ -571,9 +571,9 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     if (roundNotificationData !== '') {
       const index = publicationContent.indexOf(roundNotificationData);
 
-      const newContent = `${publicationContent}${createHtml(roundNotificationData)}${publicationContent.slice(
-        index + roundNotificationData.length
-      )}`;
+      const newContent = `${publicationContent}\n ${createHtml(
+        roundNotificationData
+      )}${publicationContent.slice(index + roundNotificationData.length)}`;
       setPublicationContent(newContent);
       setNotificationKeys([]);
       setPublicationContentUpdated(true);
