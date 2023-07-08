@@ -560,10 +560,13 @@ export const useGetManyPublicationMatchData = (roundId: string, publicationIds: 
   );
 };
 
-export const useGetPublicationMatchData = (roundId: string, publicationId: string) => {
+export const useGetPublicationMatchData = (roundId: string | undefined, publicationId: string) => {
   return useQuery(
     ['publication-match-data', roundId, publicationId],
     () => {
+      if (!roundId) {
+        return null;
+      }
       return axios.get<ApiResult<MatchingUpdateEntry[]>>(
         `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/round/projectIds/80001/${roundId}`,
         {
@@ -575,7 +578,7 @@ export const useGetPublicationMatchData = (roundId: string, publicationId: strin
     },
     {
       select: (response) => {
-        if (!response.data.success) {
+        if (!response?.data.success) {
           return null;
         }
 
@@ -589,9 +592,10 @@ export const useQueryTokenPrices = () => {
   return useQuery(
     ['token-prices'],
     () => {
-      return fetch(
+      // TODO: Use axios
+      return axios.get(
         `https://api.coingecko.com/api/v3/simple/price?ids=weth%2Cmatic-network%2Cdai&vs_currencies=usd`
-      ).then((res) => res.json());
+      );
     },
     {
       refetchOnMount: false
