@@ -1,15 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { SANDBOX_GRANTS_URL } from 'data/constants';
+import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
+import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
 import { useChainId } from 'wagmi';
 
 import { decodePublicationId, encodePublicationId } from '../utils';
 
 const getGraphEndpoint = (chainId: number) => {
   switch (chainId) {
-    case 80001:
+    case POLYGON_MAINNET.id:
+      return PRODUCTION_GRANTS_URL;
+    case POLYGON_MUMBAI.id:
       return SANDBOX_GRANTS_URL;
     default:
       throw new Error('ChainId not supported');
