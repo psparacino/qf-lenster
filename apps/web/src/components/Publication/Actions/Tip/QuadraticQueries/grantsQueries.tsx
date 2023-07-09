@@ -554,6 +554,7 @@ export const useGetRoundMatchingUpdate = (roundId: string) => {
       );
     },
     {
+      refetchInterval: 20 * 1000,
       select: (response) => {
         const posts: Record<string, MatchingUpdateEntry> = {};
 
@@ -665,7 +666,7 @@ export const useGetQFContributionSummary = (roundId: string) => {
     },
     {
       refetchOnMount: false,
-      refetchInterval: 60 * 1000,
+      refetchInterval: 20 * 1000,
       select: (response) => {
         if (!response.data.success) {
           return null;
