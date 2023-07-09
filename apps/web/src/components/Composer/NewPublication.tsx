@@ -113,6 +113,10 @@ interface NewPublicationProps {
   publication: Publication;
 }
 
+export function createHtml(data: string): string {
+  return `<span className="hidden"> ${data} </span> `;
+}
+
 const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const chainId = useChainId();
   // App store
@@ -179,6 +183,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const [requirementsStatus, setRequirementsStatus] = useState<Record<string, boolean>>({});
   const [manuallySelectedRound, setManuallySelectedRound] = useState<string>('');
   const [activeRounds, setActiveRounds] = useState<QuadraticRound[]>([]);
+  const [roundNotificationData, setRoundNotificationData] = useState<string>('');
 
   const isComment = Boolean(publication);
   const hasAudio = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.original.mimeType);
@@ -199,14 +204,13 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
     if (__typename === 'RelayError') {
       return;
     }
-    for (const key of notificationKeys) {
-      notificationKeys.pop();
-    }
+    setNotificationKeys([]);
     setSelectedQuadraticRound(defaultRound);
     editor.update(() => {
       $getRoot().clear();
     });
     setPublicationContent('');
+    setRoundNotificationData('');
     setAttachments([]);
     setVideoThumbnail({
       url: '',
@@ -245,22 +249,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
         const endTime = new Date(round.roundEndTime * 1000);
         const { matchAmount } = await getRoundQuadraticTipping(chainId, round.id);
 
-        // // TESTING ONLY
-        // const dummyDataRound: QuadraticRound = {
-        //   name: 'Dummy Data Round',
-        //   description: 'This is a dummy quadratic funding round.',
-        //   id: '0x1befac2c50dff44bdfca88c401258e08fdec8a15',
-        //   endTime: new Date('2023-12-31T23:59:59'),
-        //   token: '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889',
-        //   matchAmount: '1000000000000000000',
-        //   requirements: ['#ethcc', '#gnosis']
-        // };
-
-        // DELETE ABOVE
-
         setActiveRounds((activeRounds) => {
-          // setActiveRounds(() => {
-          // const activeRounds = [dummyDataRound];
           const newArray = activeRounds ?? [];
 
           if (!newArray.find((r) => r.id === round.id)) {
@@ -580,28 +569,15 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   };
 
   const insertHtml = async () => {
-    let notificationText: string | undefined;
+    if (roundNotificationData !== '') {
+      const index = publicationContent.indexOf(roundNotificationData);
 
-    editor.getEditorState().read(() => {
-      const textNodes = $getRoot().getAllTextNodes();
-      textNodes.find((node) => {
-        return notificationKeys.find((key: string) => {
-          return key == node.getKey();
-        });
-      });
+      const newContent = `${publicationContent.slice(0, index)}${createHtml(
+        roundNotificationData
+      )}${publicationContent.slice(index + roundNotificationData.length)}`.trim();
 
-      notificationText = textNodes
-        .find((node) => {
-          return node.getTextContent().includes(selectedQuadraticRound.id);
-        })
-        ?.getTextContent();
-    });
-
-    if (notificationText) {
-      const index = publicationContent.indexOf(notificationText);
-      const newContent = `${publicationContent.slice(0, index)}
-        <span> ${publicationContent.slice(index, index + notificationText.length)} </span>`;
       setPublicationContent(newContent);
+      setNotificationKeys([]);
       setPublicationContentUpdated(true);
     }
   };
@@ -734,6 +710,9 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
         variables: { options: { overrideSigNonce: userSigNonce }, request }
       });
     } catch {
+      setRoundNotificationData('');
+      const updatedPublicationContent = publicationContent.replace(createHtml(roundNotificationData), '');
+      setPublicationContent(updatedPublicationContent);
     } finally {
       setLoading(false);
     }
@@ -744,6 +723,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       createPublication();
       setPublicationContentUpdated(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [publicationContentUpdated]);
 
   const setGifAttachment = (gif: IGif) => {
@@ -769,6 +749,8 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
         editor={editor}
         notificationKeys={notificationKeys}
         setNotificationKeys={setNotificationKeys}
+        roundNotificationData={roundNotificationData}
+        setRoundNotificationData={setRoundNotificationData}
       />
       {publicationContentError && (
         <div className="mt-1 px-5 pb-3 text-sm font-bold text-red-500">{publicationContentError}</div>
@@ -793,6 +775,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
             <RoundInfoModal
               selectedQuadraticRound={selectedQuadraticRound}
               requirementsStatus={requirementsStatus}
+              requirementsMet={requirementsMet}
             />
           )}
           {selectedQuadraticRound !== defaultRound && (

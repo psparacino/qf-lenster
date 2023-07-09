@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { usePublicationStore } from 'src/store/publication';
 
 import type { QuadraticRound } from '../NewPublication';
+import { createHtml } from '../NewPublication';
 
 const TRANSFORMERS = [...TEXT_FORMAT_TRANSFORMERS, ...TEXT_MATCH_TRANSFORMERS];
 
@@ -34,6 +35,8 @@ interface Props {
   editor: LexicalEditor;
   notificationKeys: string[];
   setNotificationKeys: Dispatch<SetStateAction<string[]>>;
+  roundNotificationData: string;
+  setRoundNotificationData: Dispatch<SetStateAction<string>>;
 }
 const findNode = (nodeArray: TextNode[], keyArray: string[]) => {
   return nodeArray.find((node) => {
@@ -42,11 +45,15 @@ const findNode = (nodeArray: TextNode[], keyArray: string[]) => {
     });
   });
 };
-//#8B5CF6 #eae2fc
-const notificationStyles =
-  'color:#eae2fc;background-color:#8B5CF6;border-radius:8px;font-size:15px;padding:5px 3px 3px 5px;white-space:pre;word-spacing:-.2ch;overflow:hidden;text-size:6px;bottom: 1px;left:1px;';
 
-const Editor: FC<Props> = ({ selectedQuadraticRound, editor, notificationKeys, setNotificationKeys }) => {
+const Editor: FC<Props> = ({
+  selectedQuadraticRound,
+  editor,
+  notificationKeys,
+  setNotificationKeys,
+  roundNotificationData,
+  setRoundNotificationData
+}) => {
   const publicationContent = usePublicationStore((state) => state.publicationContent);
   const setPublicationContent = usePublicationStore((state) => state.setPublicationContent);
   const showNewPostModal = usePublicationStore((state) => state.showNewPostModal);
@@ -73,42 +80,39 @@ const Editor: FC<Props> = ({ selectedQuadraticRound, editor, notificationKeys, s
         const notification = findNode(root.getAllTextNodes(), notificationKeys);
         notification?.remove();
         setNotificationKeys([]);
+        setRoundNotificationData('');
+        const updatedPublicationContent = publicationContent.replace(createHtml(roundNotificationData), '');
+        setPublicationContent(updatedPublicationContent);
       });
     }
-  }, [showNewPostModal]);
-
-  useEffect(() => {
-    prevQuadraticRoundRef.current = selectedQuadraticRound.id;
-    prevQuadraticRequirementsRef.current = selectedQuadraticRound.requirements;
-  }, []);
+  }, [showNewPostModal, setRoundNotificationData, editor]);
 
   useEffect(() => {
     const prevQuadraticRound = prevQuadraticRoundRef;
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
-      let newNotification: string;
+      let roundNotificationText: string;
 
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
-        newNotification = `Your post will be included in ${selectedQuadraticRound.name} at address ${selectedQuadraticRound.id}.`;
+        roundNotificationText = `Your post will be included in ${selectedQuadraticRound.name} at address ${selectedQuadraticRound.id}.`;
+        setRoundNotificationData(roundNotificationText);
 
         editor.update(() => {
           const root = $getRoot();
-          if (notificationKeys.length > 0) {
-            const notificationNode = findNode(root.getAllTextNodes(), notificationKeys);
-            const newTextNode = $createTextNode(newNotification)
-              .setMode('token')
-              .setStyle(notificationStyles);
-            notificationKeys.splice(
-              notificationKeys.findIndex((key) => key == notificationNode?.getKey()),
-              1
-            );
-            notificationKeys.push(newTextNode.getKey());
-            notificationNode?.replace(newTextNode);
-          } else {
-            const p = $createParagraphNode();
-            const textNode = $createTextNode(newNotification).setMode('token').setStyle(notificationStyles);
-            notificationKeys.push(textNode.getKey());
-            p.append(textNode);
-            root.append(p);
+          const currentContent = root
+            .getAllTextNodes()
+            .map((node) => node.getTextContent())
+            .join(' ');
+          for (const requirement of selectedQuadraticRound.requirements) {
+            for (let i = 0; i < 1; i++) {
+              const emptyParagraph = $createParagraphNode();
+              root.append(emptyParagraph);
+            }
+            if (!currentContent.includes(requirement)) {
+              const p = $createParagraphNode();
+              const textNode = $createTextNode(requirement).setMode('token');
+              p.append(textNode);
+              root.append(p);
+            }
           }
           toast.success('Your post has been added to a round.');
         });
@@ -139,7 +143,8 @@ const Editor: FC<Props> = ({ selectedQuadraticRound, editor, notificationKeys, s
     publicationContent,
     setPublicationContent,
     notificationKeys,
-    setNotificationKeys
+    setNotificationKeys,
+    setRoundNotificationData
   ]);
 
   return (
