@@ -64,7 +64,7 @@ export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAdd
           </div>
         </div>
 
-        {!!(matchUpdate && roundInfo) && (
+        {!!(matchUpdate && roundInfo && postQuadraticTipping) && (
           <div>
             This post has received {ethers.utils.formatEther(postQuadraticTipping?.voteTipTotal)} in tips from{' '}
             {matchUpdate.uniqueContributorsCount} users. It received {matchUpdate.matchAmountInToken}{' '}
