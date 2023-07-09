@@ -1,20 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { SANDBOX_GRANTS_URL } from 'data/constants';
+import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
+import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
 import { useChainId } from 'wagmi';
 
 import { decodePublicationId, encodePublicationId } from '../utils';
 
-const apiClient = axios.create({
-  baseURL: SANDBOX_GRANTS_URL,
-  headers: {
-    'Content-Type': 'application/json'
+const getGraphEndpoint = (chainId: number) => {
+  switch (chainId) {
+    case POLYGON_MAINNET.id:
+      return PRODUCTION_GRANTS_URL;
+    case POLYGON_MUMBAI.id:
+      return SANDBOX_GRANTS_URL;
+    default:
+      throw new Error('ChainId not supported');
   }
-});
+};
 
-async function request(query: string, variables: any = {}) {
+async function fetchGraphQL(chainId: number, query: string, variables: any = {}) {
+  const graphEndpoint = getGraphEndpoint(chainId);
+  const apiClient = axios.create({
+    baseURL: graphEndpoint,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
   try {
     const response = await apiClient.post('', { query, variables });
     return response.data.data;
@@ -27,7 +39,7 @@ async function request(query: string, variables: any = {}) {
 // ROUND QUERIES
 // *************
 
-export async function getRoundInfo(grantsRound: string) {
+export async function getRoundInfo(chainId: number, grantsRound: string) {
   const roundLower = grantsRound.toLowerCase();
   const query = `{
     rounds(
@@ -53,20 +65,21 @@ export async function getRoundInfo(grantsRound: string) {
     }
   }`;
 
-  const data = await request(query);
+  const data = await fetchGraphQL(chainId, query);
   return data.rounds[0];
 }
 
 export const useGetRoundInfo = (grantsRound: string | undefined) => {
-  return useQuery(['getRoundInfo', grantsRound], async () => {
+  const chainId = useChainId();
+  return useQuery(['getRoundInfo', grantsRound, chainId], async () => {
     if (!grantsRound) {
       return null;
     }
-    return getRoundInfo(grantsRound);
+    return getRoundInfo(chainId, grantsRound);
   });
 };
 
-export async function getUserQuadraticTippingData(roundAddress: string, address: string) {
+export async function getUserQuadraticTippingData(chainId: number, roundAddress: string, address: string) {
   const query = `
   query GetUserQuadraticTippingData($roundAddressLower: String!, $addressLower: String!) {
     quadraticTippings(where: {id: $roundAddressLower}) {
@@ -89,7 +102,7 @@ export async function getUserQuadraticTippingData(roundAddress: string, address:
     roundAddressLower: roundAddress.toLowerCase(),
     addressLower: address.toLowerCase()
   };
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
 
   return data.quadraticTippings;
 }
@@ -120,7 +133,7 @@ export async function getUserQuadraticTippingData(roundAddress: string, address:
 //   return data.round;
 // }
 
-export async function getCurrentActiveRounds(unixTimestamp: number) {
+export async function getCurrentActiveRounds(chainId: number, unixTimestamp: number) {
   const query = `
     query GetCurrentActiveRounds($unixTimestamp: String!) {
     rounds(
@@ -157,7 +170,7 @@ query GetRoundMetaData($pointer: String!) {
     unixTimestamp: unixTimestamp.toString()
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
 
   const metaDataPromises = data.rounds.map((round: any) => {
     const { pointer } = round.roundMetaPtr;
@@ -165,7 +178,7 @@ query GetRoundMetaData($pointer: String!) {
       pointer
     };
 
-    return request(metadataQuery, metaDataVariables);
+    return fetchGraphQL(chainId, metadataQuery, metaDataVariables);
   });
 
   const metaDataResponses = await Promise.all(metaDataPromises);
@@ -192,7 +205,7 @@ query GetRoundMetaData($pointer: String!) {
   return concatRounds;
 }
 
-export async function getRoundUserData(roundAddress: string, address: string) {
+export async function getRoundUserData(chainId: number, roundAddress: string, address: string) {
   const query = `
   query getRoundUserData($roundAddressLower: ID!, $addressLower: String!) {
     rounds(where: {id: $roundAddressLower}) {
@@ -213,7 +226,7 @@ export async function getRoundUserData(roundAddress: string, address: string) {
     addressLower: address.toLowerCase()
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
 
   return data.rounds;
 }
@@ -222,7 +235,7 @@ export async function getRoundUserData(roundAddress: string, address: string) {
 // POST QUERIES
 // ************
 
-export async function getPostQuadraticTipping(pubId: string, roundAddress: string) {
+export async function getPostQuadraticTipping(chainId: number, pubId: string, roundAddress: string) {
   const query = `
   query GetPostQuadraticTipping($roundAddressLower: ID!, $postId: String!) {
     quadraticTipping(id: $roundAddressLower) {
@@ -248,18 +261,19 @@ export async function getPostQuadraticTipping(pubId: string, roundAddress: strin
     postId: encodePublicationId(pubId)
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
   return data.quadraticTipping;
 }
 
 export function useGetPostQuadraticTipping(pubId: string, roundAddress: string | undefined) {
+  const chainId = useChainId();
   return useQuery(
-    ['getPostQuadraticTipping', pubId, roundAddress],
+    ['getPostQuadraticTipping', pubId, roundAddress, chainId],
     async () => {
       if (!roundAddress) {
         return null;
       }
-      return getPostQuadraticTipping(pubId, roundAddress);
+      return getPostQuadraticTipping(chainId, pubId, roundAddress);
     },
     {
       select: (data) => {
@@ -283,7 +297,7 @@ export function useGetPostQuadraticTipping(pubId: string, roundAddress: string |
   );
 }
 
-export async function getRoundQuadraticTipping(roundAddress: string) {
+export async function getRoundQuadraticTipping(chainId: number, roundAddress: string) {
   const query = `
   query GetRoundQuadraticTipping($roundAddressLower: ID!) {
     quadraticTipping(id: $roundAddressLower) {
@@ -295,7 +309,7 @@ export async function getRoundQuadraticTipping(roundAddress: string) {
     roundAddressLower: roundAddress.toLowerCase()
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
   return data.quadraticTipping;
 }
 
@@ -352,7 +366,9 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     unixTimestamp: unixNow
   };
 
-  return useQuery(['all-time-stats'], () => request(query, variables), {
+  const chainId = useChainId();
+
+  return useQuery(['all-time-stats', chainId], () => fetchGraphQL(chainId, query, variables), {
     refetchOnMount: false,
     refetchInterval,
     select: (data) => {
@@ -445,6 +461,7 @@ export interface RoundMetaData {
 }
 
 export const useGetRoundMetaData = (roundMetaPtr: string) => {
+  const chainId = useChainId();
   const query = `
     query GetRoundMeta($roundMetaPtr: String!) {
       roundMetaData(id: $roundMetaPtr) {
@@ -460,7 +477,7 @@ export const useGetRoundMetaData = (roundMetaPtr: string) => {
     roundMetaPtr
   };
 
-  return useQuery(['round-meta', roundMetaPtr], () => request(query, variables), {
+  return useQuery(['round-meta', roundMetaPtr, chainId], () => fetchGraphQL(chainId, query, variables), {
     refetchOnMount: false,
     select: (data) => {
       return data.roundMetaData as RoundMetaData;
@@ -484,13 +501,15 @@ export const useGetRoundMetaDatas = (roundMetaPtrs: string[]) => {
     roundMetaPtrs
   };
 
+  const chainId = useChainId();
+
   return useQuery(
-    ['round-metas', roundMetaPtrs],
+    ['round-metas', roundMetaPtrs, chainId],
     () => {
       if (!roundMetaPtrs.length) {
         return { roundMetaDatas: [] };
       }
-      return request(query, variables);
+      return fetchGraphQL(chainId, query, variables);
     },
     {
       keepPreviousData: true,
@@ -527,7 +546,7 @@ type ApiResult<T> = {
 export const useGetRoundMatchingUpdate = (roundId: string) => {
   const chainId = useChainId();
   return useQuery(
-    ['round-matching-overview', roundId],
+    ['round-matching-overview', roundId, chainId],
     () => {
       // TODO: Do not hardcode chainId
       return axios.get<ApiResult<MatchingUpdateEntry[]>>(
@@ -554,7 +573,7 @@ export const useGetRoundMatchingUpdate = (roundId: string) => {
 export const useGetManyPublicationMatchData = (roundId: string, publicationIds: string[]) => {
   const chainId = useChainId();
   return useQuery(
-    ['publication-match-data', roundId, publicationIds],
+    ['publication-match-data', roundId, publicationIds, chainId],
     () => {
       return axios.get<ApiResult<MatchingUpdateEntry[]>>(
         `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/round/projectIds/${chainId}/${roundId}`,
@@ -586,7 +605,7 @@ export const useGetManyPublicationMatchData = (roundId: string, publicationIds: 
 export const useGetPublicationMatchData = (roundId: string | undefined, publicationId: string) => {
   const chainId = useChainId();
   return useQuery(
-    ['publication-match-data', roundId, publicationId],
+    ['publication-match-data', roundId, publicationId, chainId],
     () => {
       if (!roundId) {
         return null;
