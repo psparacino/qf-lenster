@@ -337,7 +337,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     quadraticTippings(
       orderBy: round__createdAt,
       orderDirection:desc,
-      where: { round_: { roundEndTime_gte: $unixTimestamp } }
+      where: { round_: { roundEndTime_lte: $unixTimestamp } }
     ) {
       id
       matchAmount
@@ -361,7 +361,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     }
   }`;
 
-  const unixNow = Math.floor(Date.now() / 1000).toString();
+  const unixNow = Math.floor(Date.now() / 1000 + 60 * 60 * 24 * 7).toString();
   const variables = {
     unixTimestamp: unixNow
   };
