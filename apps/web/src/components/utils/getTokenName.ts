@@ -1,7 +1,7 @@
 export const getTokenName = (address: string) => {
   let name;
 
-  switch (address.toLowerCase()) {
+  switch (address?.toLowerCase()) {
     // Mumbai
     case '0x9c3c9283d3e44854697cd22d3faa240cfb032889':
       name = 'WMATIC';

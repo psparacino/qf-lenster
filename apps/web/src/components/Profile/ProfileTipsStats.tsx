@@ -3,12 +3,15 @@
 import {
   getCurrentActiveRounds,
   getRoundUserData,
-  getUserQuadraticTippingData
+  getUserQuadraticTippingData,
+  useGetQFContributionSummary,
+  useGetRoundMatchingUpdate
 } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
 import TipsOutlineIcon from '@components/Shared/TipIcons/TipsOutlineIcon';
-import { ethers } from 'ethers';
+import { getTokenName } from '@components/utils/getTokenName';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
+import { useAppStore } from 'src/store/app';
 import { useChainId } from 'wagmi';
 
 type Round = {
@@ -21,6 +24,7 @@ type Round = {
   roundEndTime: number;
   readyForPayout: boolean;
   fundsDistributed: boolean;
+  token: string;
 };
 
 type RoundReturn = {
@@ -56,6 +60,7 @@ interface RoundStatsProps {
   round: Round;
 }
 const RoundStats: FC<RoundStatsProps> = ({ showDetails, round }) => {
+  const { data: summaryData } = useGetQFContributionSummary(round.roundId);
   function formatDate(timestamp: number) {
     const date = new Date(timestamp * 1000);
     const month = date.toLocaleString('default', { month: 'long' });
@@ -66,6 +71,8 @@ const RoundStats: FC<RoundStatsProps> = ({ showDetails, round }) => {
 
   const topic = 'justify-between flex';
   const category = 'text-gray-500';
+
+  const tokenName = getTokenName(round.token);
 
   return (
     <div
@@ -78,30 +85,23 @@ const RoundStats: FC<RoundStatsProps> = ({ showDetails, round }) => {
           <div className="md:max-lg:px-50 text-sm">
             <div className={topic}>
               <p className={category}>Amount of Tippers</p>
-              <p>{round.numberOfTippers}</p>
+              <p>{summaryData?.uniqueContributors}</p>
+            </div>
+            <div className={topic}>
+              <p className={category}>Total Tips</p>
+              <p>{summaryData?.contributionCount}</p>
             </div>
             <div className={topic}>
               <p className={category}>Total Tip Amount</p>
-              <p>{ethers.utils.formatEther(round.receivedInTotal.toString())}</p>
+              <p>
+                {summaryData?.totalTippedInToken} {tokenName}
+              </p>
             </div>
             <div className={`pt-3 ${topic}`}>
               <p className={category}>End of matching round</p>
               <p>{formatDate(round.roundEndTime)}</p>
             </div>
           </div>
-          {/* <Card>
-            <div className="text-md m-4">
-              <div className="my-2">
-                <p>Coming to Eth Denver for the first time!</p>
-                <p className="text-sm text-red-500">67 tips by 10 voters</p>
-              </div>
-              <div className="divider w-full" />
-              <div className="my-2">
-                <p>Some other post</p>
-                <p className="text-sm text-red-500">4 tips by 1 voters</p>
-              </div>
-            </div>
-          </Card> */}
           {round.receivedInTotal > 0 && <PayoutStatus round={round} />}
         </div>
       )}
@@ -111,6 +111,74 @@ const RoundStats: FC<RoundStatsProps> = ({ showDetails, round }) => {
 
 interface ProfileTipsStatsProps {
   ownedBy: string;
+}
+
+function ProfileTipStatsItem(props: {
+  s: string;
+  round: Round;
+  now: number;
+  timeLeft: string;
+  onClick: () => void;
+  showDetails: string | null;
+  ownedBy: string;
+}) {
+  const currentProfileId = useAppStore((state) => state.currentProfile?.id);
+  const { data: matchingData } = useGetRoundMatchingUpdate(props.round.roundId);
+
+  const userMatchingStats = matchingData?.matchStatsByProfileId[currentProfileId];
+  const tokenName = getTokenName(props.round.token);
+
+  return (
+    <div className="flex flex-col justify-center py-3">
+      <div className="mb-2 flex items-center space-x-4 text-xs text-gray-500">
+        <div>Round: {props.s}</div>
+        {props.round.roundEndTime > props.now ? (
+          <div className="rounded-md border-2 border-purple-500 px-2 py-1 text-sm font-bold text-purple-500">
+            currently live!
+          </div>
+        ) : props.round.fundsDistributed ? (
+          <div className="rounded-md border-2 border-red-300 px-2 py-1 text-sm font-bold text-red-300">
+            payout released!
+          </div>
+        ) : (
+          <div className="rounded-md border-2 border-gray-300 px-2 py-1 text-sm font-bold text-gray-300">
+            round ended
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-between text-sm text-gray-500">
+          <p>
+            <b>Tips:</b> {userMatchingStats?.totalTippedInToken || 0} {tokenName}
+          </p>
+          <p>
+            <b>Matching:</b> {userMatchingStats?.totalMatchedInToken || 0} {tokenName}
+          </p>
+          <p className="mb-1">
+            <b>Received in total:</b>{' '}
+            {(userMatchingStats?.totalTippedInToken || 0) + (userMatchingStats?.totalMatchedInToken || 0)}{' '}
+            {tokenName}
+          </p>
+        </div>
+        <div className="item-center my-auto flex justify-between pt-3 text-xs text-gray-500">
+          {props.round.roundEndTime > props.now && (
+            <div>
+              <p>Round ends in {props.timeLeft}</p>
+            </div>
+          )}
+          <div className="mr-4">
+            <button onClick={props.onClick}>
+              <p className="underline">
+                {props.showDetails === props.round.roundId ? 'hide' : 'show'} round details
+              </p>
+            </button>
+          </div>
+        </div>
+        <RoundStats showDetails={props.showDetails === props.round.roundId} round={props.round} />
+      </div>
+      <hr className="mt-4 border-gray-200" />
+    </div>
+  );
 }
 
 export const ProfileTipsStats: FC<ProfileTipsStatsProps> = ({ ownedBy }) => {
@@ -137,7 +205,9 @@ export const ProfileTipsStats: FC<ProfileTipsStatsProps> = ({ ownedBy }) => {
             getUserQuadraticTippingData(chainId, round.id, ownedBy!)
           ]);
 
+          // @ts-ignore
           const votes = quadraticTipping[0]?.votes;
+          // @ts-ignore
           const distributions = quadraticTipping[0]?.distributions;
           const uniquePosts = new Set();
           const uniqueTippers = new Set();
@@ -164,8 +234,10 @@ export const ProfileTipsStats: FC<ProfileTipsStatsProps> = ({ ownedBy }) => {
             totalNumberOfTips: votes.length,
             roundStartTime: userRound[0].roundStartTime,
             roundEndTime: userRound[0].roundEndTime,
+            // @ts-ignore
             readyForPayout: quadraticTipping[0].readyForPayout,
-            fundsDistributed: fundsDistributed
+            fundsDistributed: fundsDistributed,
+            token: round.token
           };
         });
 
@@ -210,53 +282,23 @@ export const ProfileTipsStats: FC<ProfileTipsStatsProps> = ({ ownedBy }) => {
 
   return (
     <div>
-      <div className="mb-2 flex flex-row items-center space-x-2 px-10">
+      <div className="mb-2 flex flex-row items-center space-x-2 ">
         <TipsOutlineIcon color="gray" />
         <h3>Tips</h3>
         <button onClick={() => setMapVisible(!isMapVisible)}>{isMapVisible ? '-' : '+'}</button>
       </div>
       {isMapVisible &&
         activeRounds.map((round, index) => (
-          <div key={index} className="flex flex-col justify-center px-10 py-3">
-            <div className="mb-2 flex items-center space-x-4 text-xs text-gray-500">
-              <div>Round: {abbreviateAddress(round.roundId)}</div>
-              {round.roundEndTime > now ? (
-                <div className="rounded-md border-2 border-purple-500 px-2 py-1 text-sm font-bold text-purple-500">
-                  currently live!
-                </div>
-              ) : round.fundsDistributed ? (
-                <div className="rounded-md border-2 border-red-300 px-2 py-1 text-sm font-bold text-red-300">
-                  payout released!
-                </div>
-              ) : (
-                <div className="rounded-md border-2 border-gray-300 px-2 py-1 text-sm font-bold text-gray-300">
-                  round ended
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col justify-between">
-              <div className="flex flex-col justify-between text-sm text-gray-500">
-                <p className="mb-1">Received in total:</p>
-                <p>{ethers.utils.formatEther(round.receivedInTotal.toString())} WMATIC</p>
-              </div>
-              <div className="item-center my-auto flex justify-between pt-3 text-xs text-gray-500">
-                {round.roundEndTime > now && (
-                  <div>
-                    <p>Round ends in {getTimeLeft(round.roundEndTime)}</p>
-                  </div>
-                )}
-                <div className="mr-4">
-                  <button
-                    onClick={() => setShowDetails(showDetails === round.roundId ? null : round.roundId)}
-                  >
-                    <p className="underline">{showDetails === round.roundId ? 'hide' : 'show'} details</p>
-                  </button>
-                </div>
-              </div>
-              <RoundStats showDetails={showDetails === round.roundId} round={round} />
-            </div>
-            <hr className="mt-4 border-gray-200" />
-          </div>
+          <ProfileTipStatsItem
+            key={index}
+            s={abbreviateAddress(round.roundId)}
+            round={round}
+            now={now}
+            timeLeft={getTimeLeft(round.roundEndTime)}
+            onClick={() => setShowDetails(showDetails === round.roundId ? null : round.roundId)}
+            showDetails={showDetails}
+            ownedBy={ownedBy!}
+          />
         ))}
     </div>
   );
