@@ -91,6 +91,7 @@ const Editor: FC<Props> = ({
 
   useEffect(() => {
     const prevQuadraticRound = prevQuadraticRoundRef;
+    const localNotificationKeys = notificationKeys;
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
       let roundNotificationText: string;
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
@@ -117,23 +118,26 @@ const Editor: FC<Props> = ({
 
           //if node contains required text add node key to notification array.
           if (userEnteredNodes) {
-            setNotificationKeys([...notificationKeys, ...userEnteredNodes.map((node) => node.getKey())]);
+            const userNodeKeys = userEnteredNodes.map((node) => node.getKey());
+            setNotificationKeys([...notificationKeys, ...userNodeKeys]);
+            localNotificationKeys.push(...userNodeKeys);
           }
-          const currentNotificationNodes = findNodes(contentNodes, notificationKeys);
-
+          const currentNotificationNodes = findNodes(contentNodes, localNotificationKeys);
+          console.log(currentNotificationNodes, contentNodes);
+          console.log('current', currentNotificationNodes, userEnteredNodes);
           if (currentNotificationNodes && userEnteredNodes) {
             for (const node of currentNotificationNodes) {
               node.remove(false);
-              notificationKeys.slice(notificationKeys.indexOf(node.getKey()), 1);
+              notificationKeys.slice(localNotificationKeys.indexOf(node.getKey()), 1);
             }
             for (const node of userEnteredNodes) {
               node.remove(false);
-              notificationKeys.slice(notificationKeys.indexOf(node.getKey()), 1);
+              notificationKeys.slice(localNotificationKeys.indexOf(node.getKey()), 1);
             }
             const newRequirements = selectedQuadraticRound.requirements.map((requirement) =>
               $createHashtagNode(requirement)
             );
-
+            console.log(localNotificationKeys);
             root.append($createParagraphNode().append(...newRequirements));
             setNotificationKeys([
               ...newRequirements.map((req) => {
