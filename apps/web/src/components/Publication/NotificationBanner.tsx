@@ -22,7 +22,7 @@ interface Props {
 export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAddress }) => {
   const { data: matchUpdate } = useGetPublicationMatchData(roundAddress, publication.id);
   const { data: roundInfo } = useGetRoundInfo(roundAddress);
-  const { data: postQuadraticTipping } = useGetPostQuadraticTipping(publication.id, roundAddress);
+  const { data: postQuadraticTipping } = useGetPostQuadraticTipping(roundAddress, publication.id);
 
   const iconClassName = showCount ? 'w-[17px] sm:w-[20px]' : 'w-[15px] sm:w-[18px]';
 
