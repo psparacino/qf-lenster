@@ -5,8 +5,7 @@ import {
   getRoundUserData,
   getUserQuadraticTippingData,
   useGetQFContributionSummary,
-  useGetRoundMatchingUpdate,
-  useGetUserQuadraticTippingData
+  useGetRoundMatchingUpdate
 } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
 import TipsOutlineIcon from '@components/Shared/TipIcons/TipsOutlineIcon';
 import { getTokenName } from '@components/utils/getTokenName';
@@ -124,7 +123,6 @@ function ProfileTipStatsItem(props: {
   ownedBy: string;
 }) {
   const currentProfileId = useAppStore((state) => state.currentProfile?.id);
-  const { data: userQuadraticTipping } = useGetUserQuadraticTippingData(props.round.roundId, props.ownedBy);
   const { data: matchingData } = useGetRoundMatchingUpdate(props.round.roundId);
 
   const userMatchingStats = matchingData?.matchStatsByProfileId[currentProfileId];
@@ -207,7 +205,9 @@ export const ProfileTipsStats: FC<ProfileTipsStatsProps> = ({ ownedBy }) => {
             getUserQuadraticTippingData(chainId, round.id, ownedBy!)
           ]);
 
+          // @ts-ignore
           const votes = quadraticTipping[0]?.votes;
+          // @ts-ignore
           const distributions = quadraticTipping[0]?.distributions;
           const uniquePosts = new Set();
           const uniqueTippers = new Set();
@@ -234,6 +234,7 @@ export const ProfileTipsStats: FC<ProfileTipsStatsProps> = ({ ownedBy }) => {
             totalNumberOfTips: votes.length,
             roundStartTime: userRound[0].roundStartTime,
             roundEndTime: userRound[0].roundEndTime,
+            // @ts-ignore
             readyForPayout: quadraticTipping[0].readyForPayout,
             fundsDistributed: fundsDistributed,
             token: round.token
