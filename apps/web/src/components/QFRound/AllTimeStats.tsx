@@ -1,4 +1,5 @@
 import { useQueryQFRoundStats } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
+import { formatDecimals } from '@components/utils/formatDecimals';
 import { t, Trans } from '@lingui/macro';
 import { Card } from 'ui';
 
@@ -20,8 +21,14 @@ export const AllTimeStats = () => {
       {allTimeStats && (
         <div className="space-y-1">
           <AllTimeStatsItem title={t`Total rounds`} value={allTimeStats.numberOfRounds} />
-          <AllTimeStatsItem title={t`Received over all rounds`} value={allTimeStats.totalTipped} />
-          <AllTimeStatsItem title={t`Matched over all rounds`} value={allTimeStats.totalMatched} />
+          <AllTimeStatsItem
+            title={t`Received over all rounds`}
+            value={formatDecimals(allTimeStats.totalTipped)}
+          />
+          <AllTimeStatsItem
+            title={t`Matched over all rounds`}
+            value={formatDecimals(allTimeStats.totalMatched)}
+          />
           <AllTimeStatsItem title={t`Tippers over all rounds`} value={allTimeStats.totalTippers} />
         </div>
       )}

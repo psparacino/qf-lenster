@@ -8,6 +8,7 @@ import {
   useGetRoundMatchingUpdate
 } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
 import TipsOutlineIcon from '@components/Shared/TipIcons/TipsOutlineIcon';
+import { formatDecimals } from '@components/utils/formatDecimals';
 import { getTokenName } from '@components/utils/getTokenName';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
@@ -74,6 +75,10 @@ const RoundStats: FC<RoundStatsProps> = ({ showDetails, round }) => {
 
   const tokenName = getTokenName(round.token);
 
+  if (!summaryData) {
+    return null;
+  }
+
   return (
     <div
       className={`pt-3 ${
@@ -85,16 +90,16 @@ const RoundStats: FC<RoundStatsProps> = ({ showDetails, round }) => {
           <div className="md:max-lg:px-50 text-sm">
             <div className={topic}>
               <p className={category}>Amount of Tippers</p>
-              <p>{summaryData?.uniqueContributors}</p>
+              <p>{summaryData.uniqueContributors}</p>
             </div>
             <div className={topic}>
               <p className={category}>Total Tips</p>
-              <p>{summaryData?.contributionCount}</p>
+              <p>{summaryData.contributionCount}</p>
             </div>
             <div className={topic}>
               <p className={category}>Total Tip Amount</p>
               <p>
-                {summaryData?.totalTippedInToken} {tokenName}
+                {formatDecimals(summaryData.totalTippedInToken)} {tokenName}
               </p>
             </div>
             <div className={`pt-3 ${topic}`}>
@@ -149,14 +154,16 @@ function ProfileTipStatsItem(props: {
       <div className="flex flex-col justify-between">
         <div className="flex flex-col justify-between text-sm text-gray-500">
           <p>
-            <b>Tips:</b> {userMatchingStats?.totalTippedInToken || 0} {tokenName}
+            <b>Tips:</b> {formatDecimals(userMatchingStats?.totalTippedInToken || 0)} {tokenName}
           </p>
           <p>
-            <b>Matching:</b> {userMatchingStats?.totalMatchedInToken || 0} {tokenName}
+            <b>Matching:</b> {formatDecimals(userMatchingStats?.totalMatchedInToken || 0)} {tokenName}
           </p>
           <p className="mb-1">
             <b>Received in total:</b>{' '}
-            {(userMatchingStats?.totalTippedInToken || 0) + (userMatchingStats?.totalMatchedInToken || 0)}{' '}
+            {formatDecimals(
+              (userMatchingStats?.totalTippedInToken || 0) + (userMatchingStats?.totalMatchedInToken || 0)
+            )}{' '}
             {tokenName}
           </p>
         </div>
