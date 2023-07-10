@@ -32,8 +32,16 @@ const PublicationBody: FC<PublicationBodyProps> = ({ publication, roundAddress, 
     function retrieveRoundAddress(input: string): string | null {
       const cleanInput = input.replace(/<[^>]*>?/gm, '');
       const pattern = /Your post will be included in (.*?)(0x[\dA-Fa-f]{40})(.*round\.|\.)/;
+      const secondPattern =
+        /This post is included in the (.*?) round \((0x[\dA-Fa-f]{40})\) on Quadratic Lenster/;
 
-      const match = cleanInput.match(pattern);
+      let match = cleanInput.match(pattern);
+
+      if (!match) {
+        match = cleanInput.match(secondPattern);
+      } else {
+        console.log('No Ethereum address found');
+      }
 
       return match ? match[2] : null;
     }
@@ -60,13 +68,11 @@ const PublicationBody: FC<PublicationBodyProps> = ({ publication, roundAddress, 
   if (publication?.metadata?.encryptionParams) {
     return <DecryptedPublicationBody encryptedPublication={publication} />;
   }
-
   return (
     <div className="break-words">
       <Markup className={clsx({ 'line-clamp-5': showMore }, 'markup linkify text-md break-words')}>
         {content}
       </Markup>
-
       {showMore && (
         <div className="lt-text-gray-500 mt-4 flex items-center space-x-1 text-sm font-bold">
           <EyeIcon className="h-4 w-4" />

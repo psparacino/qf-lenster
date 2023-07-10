@@ -93,9 +93,9 @@ const Editor: FC<Props> = ({
     const prevQuadraticRound = prevQuadraticRoundRef;
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
       let roundNotificationText: string;
-      console.log('round change');
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
-        roundNotificationText = `Your post will be included in ${selectedQuadraticRound.name} at address ${selectedQuadraticRound.id}.`;
+        roundNotificationText = `This post is included in the ${selectedQuadraticRound.name} round (${selectedQuadraticRound.id}) on Quadratic Lenster`;
+
         setRoundNotificationData(roundNotificationText);
 
         editor.update(() => {
@@ -105,7 +105,6 @@ const Editor: FC<Props> = ({
           //see if nodes contain required text
           let userEnteredNodes = contentNodes.filter((node) => {
             for (const requirement of selectedQuadraticRound.requirements) {
-              console.log(requirement);
               if (
                 node.getTextContent().includes(requirement) &&
                 notificationKeys.filter((key) => node.getKey() == key)?.length == 0
@@ -121,10 +120,8 @@ const Editor: FC<Props> = ({
             setNotificationKeys([...notificationKeys, ...userEnteredNodes.map((node) => node.getKey())]);
           }
           const currentNotificationNodes = findNodes(contentNodes, notificationKeys);
-          console.log(currentNotificationNodes, notificationKeys, contentNodes);
-          console.log('current', currentNotificationNodes, userEnteredNodes);
+
           if (currentNotificationNodes && userEnteredNodes) {
-            console.log('does not contains requirement');
             for (const node of currentNotificationNodes) {
               node.remove(false);
               notificationKeys.slice(notificationKeys.indexOf(node.getKey()), 1);
@@ -136,7 +133,7 @@ const Editor: FC<Props> = ({
             const newRequirements = selectedQuadraticRound.requirements.map((requirement) =>
               $createHashtagNode(requirement)
             );
-            console.log(notificationKeys);
+
             root.append($createParagraphNode().append(...newRequirements));
             setNotificationKeys([
               ...newRequirements.map((req) => {
@@ -152,7 +149,12 @@ const Editor: FC<Props> = ({
             console.log(notificationKeys);
           }
 
-          toast.success(roundNotificationText);
+          for (let i = 0; i < 1; i++) {
+            const emptyParagraph = $createParagraphNode();
+            root.append(emptyParagraph);
+          }
+
+          toast.success(`Post added to ${selectedQuadraticRound.name}!`);
         });
       } else {
         editor.update(() => {
