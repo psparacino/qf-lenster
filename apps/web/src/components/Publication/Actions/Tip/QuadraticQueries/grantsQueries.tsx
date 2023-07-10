@@ -266,6 +266,24 @@ export async function getRoundUserData(chainId: number, roundAddress: string, ad
 // POST QUERIES
 // ************
 
+interface PostQuadraticTippingData {
+  id: string;
+  votes: {
+    version: number;
+    to: string;
+    projectId: string;
+    token: string;
+    round: {
+      id: string;
+      roundEndTime: number;
+    }[];
+    id: string;
+    from: string;
+    createdAt: number;
+    amount: string;
+  }[];
+}
+
 export async function getPostQuadraticTipping(chainId: number, pubId: string, roundAddress: string) {
   const query = `
   query GetPostQuadraticTipping($roundAddressLower: ID!, $postId: String!) {
@@ -292,7 +310,9 @@ export async function getPostQuadraticTipping(chainId: number, pubId: string, ro
     postId: encodePublicationId(pubId)
   };
 
-  const data = await fetchGraphQL(chainId, query, variables);
+  const data = (await fetchGraphQL(chainId, query, variables)) as {
+    quadraticTipping: PostQuadraticTippingData;
+  };
   return data.quadraticTipping;
 }
 
