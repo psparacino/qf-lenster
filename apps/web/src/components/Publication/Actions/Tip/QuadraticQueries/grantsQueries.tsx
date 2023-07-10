@@ -1,19 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { SANDBOX_GRANTS_URL } from 'data/constants';
+import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
+import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
+import { useChainId } from 'wagmi';
 
 import { decodePublicationId, encodePublicationId } from '../utils';
 
-const apiClient = axios.create({
-  baseURL: SANDBOX_GRANTS_URL,
-  headers: {
-    'Content-Type': 'application/json'
+const getGraphEndpoint = (chainId: number) => {
+  switch (chainId) {
+    case POLYGON_MAINNET.id:
+      return PRODUCTION_GRANTS_URL;
+    case POLYGON_MUMBAI.id:
+      return SANDBOX_GRANTS_URL;
+    default:
+      throw new Error('ChainId not supported');
   }
-});
+};
 
-async function request(query: string, variables: any = {}) {
+async function fetchGraphQL(chainId: number, query: string, variables: any = {}) {
+  const graphEndpoint = getGraphEndpoint(chainId);
+  const apiClient = axios.create({
+    baseURL: graphEndpoint,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
   try {
     const response = await apiClient.post('', { query, variables });
     return response.data.data;
@@ -26,7 +39,7 @@ async function request(query: string, variables: any = {}) {
 // ROUND QUERIES
 // *************
 
-export async function getRoundInfo(grantsRound: string) {
+export async function getRoundInfo(chainId: number, grantsRound: string) {
   const roundLower = grantsRound.toLowerCase();
   const query = `{
     rounds(
@@ -51,11 +64,22 @@ export async function getRoundInfo(grantsRound: string) {
       }
     }
   }`;
-  const data = await request(query);
+
+  const data = await fetchGraphQL(chainId, query);
   return data.rounds[0];
 }
 
-export async function getUserQuadraticTippingData(roundAddress: string, address: string) {
+export const useGetRoundInfo = (grantsRound: string | undefined) => {
+  const chainId = useChainId();
+  return useQuery(['getRoundInfo', grantsRound, chainId], async () => {
+    if (!grantsRound) {
+      return null;
+    }
+    return getRoundInfo(chainId, grantsRound);
+  });
+};
+
+export async function getUserQuadraticTippingData(chainId: number, roundAddress: string, address: string) {
   const query = `
   query GetUserQuadraticTippingData($roundAddressLower: String!, $addressLower: String!) {
     quadraticTippings(where: {id: $roundAddressLower}) {
@@ -78,7 +102,7 @@ export async function getUserQuadraticTippingData(roundAddress: string, address:
     roundAddressLower: roundAddress.toLowerCase(),
     addressLower: address.toLowerCase()
   };
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
 
   return data.quadraticTippings;
 }
@@ -109,7 +133,7 @@ export async function getUserQuadraticTippingData(roundAddress: string, address:
 //   return data.round;
 // }
 
-export async function getCurrentActiveRounds(unixTimestamp: number) {
+export async function getCurrentActiveRounds(chainId: number, unixTimestamp: number) {
   const query = `
     query GetCurrentActiveRounds($unixTimestamp: String!) {
     rounds(
@@ -146,7 +170,7 @@ query GetRoundMetaData($pointer: String!) {
     unixTimestamp: unixTimestamp.toString()
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
 
   const metaDataPromises = data.rounds.map((round: any) => {
     const { pointer } = round.roundMetaPtr;
@@ -154,7 +178,7 @@ query GetRoundMetaData($pointer: String!) {
       pointer
     };
 
-    return request(metadataQuery, metaDataVariables);
+    return fetchGraphQL(chainId, metadataQuery, metaDataVariables);
   });
 
   const metaDataResponses = await Promise.all(metaDataPromises);
@@ -181,28 +205,7 @@ query GetRoundMetaData($pointer: String!) {
   return concatRounds;
 }
 
-export const getRoundMetadata = async (pointer: string) => {
-  const query = `
-    query GetRoundMeta($pointer: String!) {
-      roundMetaData(id: $pointer) {
-        description
-        id
-        name
-        requirements
-        supportEmail
-      }
-    }
-  `;
-  const variables = {
-    pointer
-  };
-
-  const data = await request(query, variables);
-
-  return data.roundMetaData;
-};
-
-export async function getRoundUserData(roundAddress: string, address: string) {
+export async function getRoundUserData(chainId: number, roundAddress: string, address: string) {
   const query = `
   query getRoundUserData($roundAddressLower: ID!, $addressLower: String!) {
     rounds(where: {id: $roundAddressLower}) {
@@ -223,7 +226,7 @@ export async function getRoundUserData(roundAddress: string, address: string) {
     addressLower: address.toLowerCase()
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
 
   return data.rounds;
 }
@@ -232,7 +235,7 @@ export async function getRoundUserData(roundAddress: string, address: string) {
 // POST QUERIES
 // ************
 
-export async function getPostQuadraticTipping(pubId: string, roundAddress: string) {
+export async function getPostQuadraticTipping(chainId: number, pubId: string, roundAddress: string) {
   const query = `
   query GetPostQuadraticTipping($roundAddressLower: ID!, $postId: String!) {
     quadraticTipping(id: $roundAddressLower) {
@@ -258,11 +261,64 @@ export async function getPostQuadraticTipping(pubId: string, roundAddress: strin
     postId: encodePublicationId(pubId)
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
   return data.quadraticTipping;
 }
 
-export async function getRoundQuadraticTipping(roundAddress: string) {
+export function useGetPostQuadraticTipping(pubId: string, roundAddress: string | undefined) {
+  const chainId = useChainId();
+  return useQuery(
+    ['getPostQuadraticTipping', pubId, roundAddress, chainId],
+    async () => {
+      if (!roundAddress) {
+        return null;
+      }
+      return getPostQuadraticTipping(chainId, pubId, roundAddress);
+    },
+    {
+      select: (data) => {
+        if (!data) {
+          return data;
+        }
+        const votes = data?.votes || [];
+        let voteTipTotal = BigNumber.from(0);
+        for (const vote of votes) {
+          if (!vote) {
+            continue;
+          }
+          voteTipTotal = voteTipTotal.add(BigNumber.from(vote.amount));
+        }
+        return {
+          ...data,
+          voteTipTotal
+        };
+      }
+    }
+  );
+}
+
+export const getRoundMetadata = async (chainId: number, pointer: string) => {
+  const query = `
+    query GetRoundMeta($pointer: String!) {
+      roundMetaData(id: $pointer) {
+        description
+        id
+        name
+        requirements
+        supportEmail
+      }
+    }
+  `;
+  const variables = {
+    pointer
+  };
+
+  const data = await fetchGraphQL(chainId, query, variables);
+
+  return data.roundMetaData;
+};
+
+export async function getRoundQuadraticTipping(chainId: number, roundAddress: string) {
   const query = `
   query GetRoundQuadraticTipping($roundAddressLower: ID!) {
     quadraticTipping(id: $roundAddressLower) {
@@ -274,7 +330,7 @@ export async function getRoundQuadraticTipping(roundAddress: string) {
     roundAddressLower: roundAddress.toLowerCase()
   };
 
-  const data = await request(query, variables);
+  const data = await fetchGraphQL(chainId, query, variables);
   return data.quadraticTipping;
 }
 
@@ -302,7 +358,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     quadraticTippings(
       orderBy: round__createdAt,
       orderDirection:desc,
-      where: { round_: { roundEndTime_gte: $unixTimestamp } }
+      where: { round_: { roundEndTime_lte: $unixTimestamp } }
     ) {
       id
       matchAmount
@@ -326,12 +382,14 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     }
   }`;
 
-  const unixNow = Math.floor(Date.now() / 1000).toString();
+  const unixNow = Math.floor(Date.now() / 1000 + 60 * 60 * 24 * 7).toString();
   const variables = {
     unixTimestamp: unixNow
   };
 
-  return useQuery(['all-time-stats'], () => request(query, variables), {
+  const chainId = useChainId();
+
+  return useQuery(['all-time-stats', chainId], () => fetchGraphQL(chainId, query, variables), {
     refetchOnMount: false,
     refetchInterval,
     select: (data) => {
@@ -424,6 +482,7 @@ export interface RoundMetaData {
 }
 
 export const useGetRoundMetaData = (roundMetaPtr: string) => {
+  const chainId = useChainId();
   const query = `
     query GetRoundMeta($roundMetaPtr: String!) {
       roundMetaData(id: $roundMetaPtr) {
@@ -439,7 +498,7 @@ export const useGetRoundMetaData = (roundMetaPtr: string) => {
     roundMetaPtr
   };
 
-  return useQuery(['round-meta', roundMetaPtr], () => request(query, variables), {
+  return useQuery(['round-meta', roundMetaPtr, chainId], () => fetchGraphQL(chainId, query, variables), {
     refetchOnMount: false,
     select: (data) => {
       return data.roundMetaData as RoundMetaData;
@@ -463,13 +522,15 @@ export const useGetRoundMetaDatas = (roundMetaPtrs: string[]) => {
     roundMetaPtrs
   };
 
+  const chainId = useChainId();
+
   return useQuery(
-    ['round-metas', roundMetaPtrs],
+    ['round-metas', roundMetaPtrs, chainId],
     () => {
       if (!roundMetaPtrs.length) {
         return { roundMetaDatas: [] };
       }
-      return request(query, variables);
+      return fetchGraphQL(chainId, query, variables);
     },
     {
       keepPreviousData: true,
@@ -492,31 +553,101 @@ export interface MatchingUpdateEntry {
   projectId: string;
   matchAmountInUSD: number;
   totalContributionsInUSD: number;
+  totalContributionsInToken: string;
   matchPoolPercentage: number;
   matchAmountInToken: number;
   uniqueContributorsCount: number;
 }
 
+type ApiResult<T> = {
+  data: T;
+  success: boolean;
+};
+
 export const useGetRoundMatchingUpdate = (roundId: string) => {
+  const chainId = useChainId();
   return useQuery(
-    ['round-matching-update', roundId],
+    ['round-matching-overview', roundId, chainId],
     () => {
-      return fetch(`${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/update/match/round/80001/${roundId}`, {
-        method: 'POST'
-      }).then((res) => res.json() as Promise<{ data: MatchingUpdateEntry[] }>);
+      // TODO: Do not hardcode chainId
+      return axios.get<ApiResult<MatchingUpdateEntry[]>>(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/round/${chainId}/${roundId}`
+      );
     },
     {
-      select: (data) => {
-        const totalTips = data.data.reduce((acc, curr) => acc + curr.totalContributionsInUSD, 0);
+      refetchInterval: 20 * 1000,
+      select: (response) => {
         const posts: Record<string, MatchingUpdateEntry> = {};
 
-        for (const entry of data.data) {
-          posts[entry.projectId] = entry;
+        if (Array.isArray(response.data.data)) {
+          for (const entry of response.data.data) {
+            posts[entry.projectId] = entry;
+          }
         }
         return {
-          totalTips,
           posts
         };
+      }
+    }
+  );
+};
+
+export const useGetManyPublicationMatchData = (roundId: string, publicationIds: string[]) => {
+  const chainId = useChainId();
+  return useQuery(
+    ['publication-match-data', roundId, publicationIds, chainId],
+    () => {
+      return axios.get<ApiResult<MatchingUpdateEntry[]>>(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/round/projectIds/${chainId}/${roundId}`,
+        {
+          params: {
+            projectId: publicationIds
+          }
+        }
+      );
+    },
+    {
+      select: (response) => {
+        const result: Record<string, MatchingUpdateEntry> = {};
+
+        if (!response.data.success) {
+          return result;
+        }
+
+        for (const entry of response.data.data) {
+          result[entry.projectId] = entry;
+        }
+
+        return result;
+      }
+    }
+  );
+};
+
+export const useGetPublicationMatchData = (roundId: string | undefined, publicationId: string) => {
+  const chainId = useChainId();
+  return useQuery(
+    ['publication-match-data', roundId, publicationId, chainId],
+    () => {
+      if (!roundId) {
+        return null;
+      }
+      return axios.get<ApiResult<MatchingUpdateEntry[]>>(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/round/projectIds/${chainId}/${roundId}`,
+        {
+          params: {
+            projectId: [publicationId]
+          }
+        }
+      );
+    },
+    {
+      select: (response) => {
+        if (!response?.data.success) {
+          return null;
+        }
+
+        return response.data.data[0];
       }
     }
   );
@@ -526,12 +657,43 @@ export const useQueryTokenPrices = () => {
   return useQuery(
     ['token-prices'],
     () => {
-      return fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=weth%2Cmatic-network%2Cdai&vs_currencies=usd`
-      ).then((res) => res.json());
+      return axios
+        .get(`https://api.coingecko.com/api/v3/simple/price?ids=weth%2Cmatic-network%2Cdai&vs_currencies=usd`)
+        .then((response) => response.data);
     },
     {
       refetchOnMount: false
+    }
+  );
+};
+
+export interface QFContributionSummary {
+  contributionCount: number;
+  uniqueContributors: number;
+  totalContributionsInUSD?: number;
+  averageUSDContribution?: number;
+  totalTippedInToken: string;
+  averageTipInToken: string;
+}
+
+export const useGetQFContributionSummary = (roundId: string) => {
+  const chainId = useChainId();
+  return useQuery(
+    ['qf-contribution-summary', roundId],
+    () => {
+      return axios.get<ApiResult<QFContributionSummary>>(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/summary/round/${chainId}/${roundId}`
+      );
+    },
+    {
+      refetchOnMount: false,
+      refetchInterval: 20 * 1000,
+      select: (response) => {
+        if (!response.data.success) {
+          return null;
+        }
+        return response.data.data;
+      }
     }
   );
 };

@@ -74,7 +74,7 @@ import { PUBLICATION } from 'src/tracking';
 import type { NewLensterAttachment } from 'src/types';
 import { Button, Card, ErrorMessage, Spinner, Tooltip } from 'ui';
 import { v4 as uuid } from 'uuid';
-import { useContractWrite, useProvider, useSigner, useSignTypedData } from 'wagmi';
+import { useContractWrite, useNetwork, useProvider, useSigner, useSignTypedData } from 'wagmi';
 
 import Editor from './Editor';
 import RoundInfoModal from './RoundInfoModal';
@@ -183,6 +183,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   const [manuallySelectedRound, setManuallySelectedRound] = useState<string>('');
   const [activeRounds, setActiveRounds] = useState<QuadraticRound[]>([]);
   const [roundNotificationData, setRoundNotificationData] = useState<string>('');
+  const { chain } = useNetwork();
 
   const isComment = Boolean(publication);
   const hasAudio = ALLOWED_AUDIO_TYPES.includes(attachments[0]?.original.mimeType);
@@ -240,38 +241,41 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
   useEffect(() => {
     async function getActiveRounds() {
-      const now = Math.floor(Date.now() / 1000);
+      if (chain) {
+        const now = Math.floor(Date.now() / 1000);
 
-      const rounds = await getCurrentActiveRounds(now);
+        const rounds = await getCurrentActiveRounds(chain.id, now);
 
-      for (const round of rounds) {
-        const endTime = new Date(round.roundEndTime * 1000);
-        const { matchAmount } = await getRoundQuadraticTipping(round.id);
+        for (const round of rounds) {
+          const endTime = new Date(round.roundEndTime * 1000);
+          const { matchAmount } = await getRoundQuadraticTipping(chain.id, round.id);
 
-        setActiveRounds((activeRounds) => {
-          const newArray = activeRounds ?? [];
+          setActiveRounds((activeRounds) => {
+            const newArray = activeRounds ?? [];
 
-          if (!newArray.find((r) => r.id === round.id)) {
-            return [
-              ...newArray,
-              {
-                name: round.roundMetaData.name,
-                description: round.roundMetaData.description,
-                id: round.id,
-                endTime,
-                token: round.token,
-                matchAmount,
-                requirements: round.roundMetaData.requirements
-              }
-            ];
-          }
+            if (!newArray.find((r) => r.id === round.id)) {
+              return [
+                ...newArray,
+                {
+                  name: round.roundMetaData.name,
+                  description: round.roundMetaData.description,
+                  id: round.id,
+                  endTime,
+                  token: round.token,
+                  matchAmount,
+                  requirements: round.roundMetaData.requirements
+                }
+              ];
+            }
 
-          return newArray;
-        });
+            return newArray;
+          });
+        }
       }
     }
+
     getActiveRounds();
-  }, []);
+  }, [chain]);
 
   useEffect(() => {
     let found = false;

@@ -24,6 +24,7 @@ import {
   useBalance,
   useContractRead,
   useContractWrite,
+  useNetwork,
   useSendTransaction,
   useWaitForTransaction
 } from 'wagmi';
@@ -88,24 +89,28 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
 
   // Get and store round info
 
+  const { chain } = useNetwork();
+
   useEffect(() => {
     async function fetchRoundInfo(roundAddress: string) {
-      try {
-        const round = await getRoundInfo(roundAddress);
-        if (round) {
-          const metadata = await getRoundMetadata(round.roundMetaPtr.pointer);
-          const updatedRoundInfo = { ...round, metadata };
-          setRoundInfo(updatedRoundInfo);
-          setRoundInfoLoaded(true);
+      if (chain) {
+        try {
+          const round = await getRoundInfo(chain.id, roundAddress);
+          if (round) {
+            const metadata = await getRoundMetadata(chain.id, round.roundMetaPtr.pointer);
+            const updatedRoundInfo = { ...round, metadata };
+            setRoundInfo(updatedRoundInfo);
+            setRoundInfoLoaded(true);
+          }
+        } catch (error) {
+          console.error('Error fetching round info:', error);
+          return null;
         }
-      } catch (error) {
-        console.error('Error fetching round info:', error);
-        return null;
       }
     }
 
     fetchRoundInfo(roundAddress);
-  }, [roundAddress]);
+  }, [roundAddress, chain, address, publication?.id]);
 
   // TEMPORARY VERSION- HARDCODED WMATIC
   // useEffect(() => {
