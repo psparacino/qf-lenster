@@ -3,7 +3,6 @@ import {
   useGetRoundMetaDatas,
   useQueryQFRoundStats
 } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
-import { AllTimeStats } from '@components/QFRound/AllTimeStats';
 import { RoundStats } from '@components/QFRound/RoundStats';
 import Loading from '@components/Shared/Loading';
 import { APP_NAME } from 'data';
@@ -63,7 +62,14 @@ const ViewQFRound: NextPage = () => {
         })}
       </GridItemEight>
       <GridItemFour>
-        <AllTimeStats />
+        <Card className="p-4">
+          <div className="text-lg font-bold">Welcome to QF Lenster!</div>
+          <div className="text-md mt-2">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, diam quis aliquam ultricies,
+            nunc elit ultricies nunc, quis aliquam elit elit sed elit. Sed euismod, diam quis aliquam
+            ultricies, nunc elit ultricies nunc, quis aliquam elit elit sed elit.
+          </div>
+        </Card>
       </GridItemFour>
     </GridLayout>
   );
