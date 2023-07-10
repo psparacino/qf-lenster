@@ -12,7 +12,7 @@ import dynamic from 'next/dynamic';
 import type { FC } from 'react';
 import React, { useState } from 'react';
 import { Modal, Tooltip } from 'ui';
-import { useAccount, useChainId } from 'wagmi';
+import { useAccount } from 'wagmi';
 
 import {
   useGetPostQuadraticTipping,
