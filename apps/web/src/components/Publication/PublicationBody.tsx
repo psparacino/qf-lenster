@@ -33,7 +33,16 @@ const PublicationBody: FC<PublicationBodyProps> = ({ publication, roundAddress, 
       const cleanInput = input.replace(/<[^>]*>?/gm, '');
       const pattern = /Your post will be included in (.*?)(0x[\dA-Fa-f]{40})(.*round\.|\.)/;
 
-      const match = cleanInput.match(pattern);
+      const secondPattern =
+        /This post is included in the (.*?) round \((0x[\dA-Fa-f]{40})\) on Quadratic Lenster/;
+
+      let match = cleanInput.match(pattern);
+
+      if (!match) {
+        match = cleanInput.match(secondPattern);
+      } else {
+        console.log('No Ethereum address found');
+      }
 
       return match ? match[2] : null;
     }

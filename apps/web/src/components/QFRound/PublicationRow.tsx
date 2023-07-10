@@ -39,7 +39,7 @@ export const PublicationRow = ({
     return null;
   }
 
-  const tokenName = getTokenName(roundInfo?.token, { id: chainId });
+  const tokenName = getTokenName(roundInfo?.token);
 
   return (
     <div

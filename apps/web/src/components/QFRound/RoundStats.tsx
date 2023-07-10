@@ -72,7 +72,7 @@ export const RoundStats = ({
   const endTime = new Date(stats.roundEndTime * 1000).toLocaleString();
 
   const postsReceivingTips = Object.keys(matchingUpdate?.posts || {}).length;
-  const tokenName = getTokenName(stats.token, { id: chainId });
+  const tokenName = getTokenName(stats.token);
 
   return (
     <div className="">

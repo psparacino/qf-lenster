@@ -142,12 +142,8 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
                 } ml-3 text-[11px] sm:text-xs`}
               >
                 {roundOpen
-                  ? `Match estimate ${matchingData.matchAmountInToken} ${getTokenName(roundInfo.token, {
-                      id: chainId
-                    })}`
-                  : `Matched with ${matchingData.matchAmountInToken} ${getTokenName(roundInfo.token, {
-                      id: chainId
-                    })}`}
+                  ? `Match estimate ${matchingData.matchAmountInToken} ${getTokenName(roundInfo.token)}`
+                  : `Matched with ${matchingData.matchAmountInToken} ${getTokenName(roundInfo.token)}`}
               </span>
             )}
           </div>
