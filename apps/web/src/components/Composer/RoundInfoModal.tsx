@@ -1,4 +1,5 @@
 import type { QuadraticRound } from '@components/Composer/NewPublication';
+import { getPolygonScanLink } from '@components/utils/getPolygonScanLink';
 import { getTokenName } from '@components/utils/getTokenName';
 import { CheckIcon, LightBulbIcon, XIcon } from '@heroicons/react/outline';
 import { t } from '@lingui/macro';
@@ -21,29 +22,6 @@ const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus,
   const { chain } = useNetwork();
 
   const { name, description, id, endTime, token, matchAmount, requirements } = selectedQuadraticRound;
-
-  const polygonScanLink = (address: string, type: string) => {
-    let url = '';
-    if (chain) {
-      switch (chain.id) {
-        case 80001:
-          if (type === 'address') {
-            url = `https://mumbai.polygonscan.com/address/${address}`;
-          } else {
-            url = `https://mumbai.polygonscan.com/token/${address}`;
-          }
-          break;
-        case 137:
-          if (type === 'address') {
-            url = `https://polygonscan.com/address/${address}`;
-          } else {
-            url = `https://polygonscan.com/token/${address}`;
-          }
-          break;
-      }
-    }
-    return url;
-  };
 
   return (
     <>
@@ -72,11 +50,13 @@ const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus,
           </div>
           <div className="mb-4 border-b border-purple-200 pb-4">
             <h2 className="text-md font-semibold text-purple-500">Match Amount</h2>
-            <Link href={polygonScanLink(token, 'token')} target="blank">
-              <p className="text-sm hover:text-blue-500">
-                {formatEther(matchAmount)} {getTokenName(token, chain)}
-              </p>
-            </Link>
+            {chain && (
+              <Link href={getPolygonScanLink(token, 'token', chain)} target="blank">
+                <p className="text-sm hover:text-blue-500">
+                  {formatEther(matchAmount)} {getTokenName(token)}
+                </p>
+              </Link>
+            )}
           </div>
           {requirements.length !== 0 && requirements[0] !== '' && (
             <div className="mb-4 border-b border-purple-200 pb-4">
@@ -99,7 +79,7 @@ const RoundInfoModal: FC<Props> = ({ selectedQuadraticRound, requirementsStatus,
           )}
           <div className="mb-4 border-b border-purple-200 pb-4">
             <h2 className="text-md font-semibold text-purple-500">Round Address</h2>
-            <Link href={polygonScanLink(id, 'address')} target="blank">
+            <Link href={getPolygonScanLink(id, 'address', chain)} target="blank">
               <p className="text-sm hover:text-blue-500">{id}</p>
             </Link>
           </div>

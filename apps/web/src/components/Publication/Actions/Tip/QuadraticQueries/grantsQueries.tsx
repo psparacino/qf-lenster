@@ -297,6 +297,27 @@ export function useGetPostQuadraticTipping(pubId: string, roundAddress: string |
   );
 }
 
+export const getRoundMetadata = async (chainId: number, pointer: string) => {
+  const query = `
+    query GetRoundMeta($pointer: String!) {
+      roundMetaData(id: $pointer) {
+        description
+        id
+        name
+        requirements
+        supportEmail
+      }
+    }
+  `;
+  const variables = {
+    pointer
+  };
+
+  const data = await fetchGraphQL(chainId, query, variables);
+
+  return data.roundMetaData;
+};
+
 export async function getRoundQuadraticTipping(chainId: number, roundAddress: string) {
   const query = `
   query GetRoundQuadraticTipping($roundAddressLower: ID!) {

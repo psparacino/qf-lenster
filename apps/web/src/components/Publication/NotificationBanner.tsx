@@ -5,7 +5,6 @@ import { ethers } from 'ethers';
 import type { Publication } from 'lens';
 import type { FC } from 'react';
 import { Card } from 'ui/src/Card';
-import { useChainId } from 'wagmi';
 
 import {
   useGetPostQuadraticTipping,
@@ -24,7 +23,6 @@ export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAdd
   const { data: matchUpdate } = useGetPublicationMatchData(roundAddress, publication.id);
   const { data: roundInfo } = useGetRoundInfo(roundAddress);
   const { data: postQuadraticTipping } = useGetPostQuadraticTipping(publication.id, roundAddress);
-  const chainId = useChainId();
 
   const iconClassName = showCount ? 'w-[17px] sm:w-[20px]' : 'w-[15px] sm:w-[18px]';
 
@@ -68,7 +66,7 @@ export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAdd
           <div>
             This post has received {ethers.utils.formatEther(postQuadraticTipping?.voteTipTotal)} in tips from{' '}
             {matchUpdate.uniqueContributorsCount} users. It received {matchUpdate.matchAmountInToken}{' '}
-            {getTokenName(roundInfo.token, { id: chainId })} in matching.
+            {getTokenName(roundInfo.token)} in matching.
           </div>
         )}
         {roundInfo && (

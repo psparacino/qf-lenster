@@ -64,7 +64,7 @@ const SelectQuadraticRoundMenu = ({
                         <div className="mt-2 text-sm">
                           <span className="font-semibold text-gray-800">Matching Amount: </span>
                           <span className="text-gray-600">
-                            {formatEther(round.matchAmount)} {getTokenName(round.token, chain)}
+                            {formatEther(round.matchAmount)} {getTokenName(round.token)}
                           </span>
                         </div>
                         <div className="mt-2 text-sm">
