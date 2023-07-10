@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
+import dayjs from 'dayjs';
 import { BigNumber } from 'ethers';
 import { formatEther } from 'ethers/lib/utils';
 import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
@@ -71,13 +72,45 @@ export async function getRoundInfo(chainId: number, grantsRound: string) {
 
 export const useGetRoundInfo = (grantsRound: string | undefined) => {
   const chainId = useChainId();
-  return useQuery(['getRoundInfo', grantsRound, chainId], async () => {
-    if (!grantsRound) {
-      return null;
+  return useQuery(
+    ['get-round-info', grantsRound, chainId],
+    async () => {
+      if (!grantsRound) {
+        return null;
+      }
+      return getRoundInfo(chainId, grantsRound);
+    },
+    {
+      select: (data) => {
+        if (!data) {
+          return null;
+        }
+
+        const roundOpen = dayjs.unix(data.roundEndTime).isAfter(dayjs());
+        return {
+          ...data,
+          roundOpen
+        };
+      }
     }
-    return getRoundInfo(chainId, grantsRound);
-  });
+  );
 };
+
+interface UserQuadraticTippingData {
+  id: string;
+  readyForPayout: boolean;
+  distributions: {
+    id: string;
+    address: string;
+    amount: string;
+  }[];
+  votes: {
+    projectId: string;
+    amount: string;
+    to: string;
+    from: string;
+  }[];
+}
 
 export async function getUserQuadraticTippingData(chainId: number, roundAddress: string, address: string) {
   const query = `
@@ -104,34 +137,32 @@ export async function getUserQuadraticTippingData(chainId: number, roundAddress:
   };
   const data = await fetchGraphQL(chainId, query, variables);
 
-  return data.quadraticTippings;
+  return data.quadraticTippings as UserQuadraticTippingData;
 }
 
-// export async function getRoundTippingData(grantsRound: string) {
-//   const query = `
-//     query getRoundTippingData($id: String!) {
-//       round(id: $id) {
-//         id
-//         createdAt
-//         token
-//         votingStrategy {
-//           id
-//           votes {
-//             id
-//             amount
-//             from
-//             to
-//             version
-//             token
-//           }
-//         }
-//         roundEndTime
-//       }
-//     }
-//   `;
-//   const data = await request(query, { id: grantsRound });
-//   return data.round;
-// }
+export const useGetUserQuadraticTippingData = (
+  roundAddress: string | undefined,
+  address: string | undefined
+) => {
+  const chainId = useChainId();
+  return useQuery(
+    ['getUserQuadraticTippingData', roundAddress, address, chainId],
+    async () => {
+      if (!roundAddress || !address) {
+        return null;
+      }
+      return getUserQuadraticTippingData(chainId, roundAddress, address);
+    },
+    {
+      select: (data) => {
+        if (!data) {
+          return null;
+        }
+        return data;
+      }
+    }
+  );
+};
 
 export async function getCurrentActiveRounds(chainId: number, unixTimestamp: number) {
   const query = `
@@ -265,10 +296,10 @@ export async function getPostQuadraticTipping(chainId: number, pubId: string, ro
   return data.quadraticTipping;
 }
 
-export function useGetPostQuadraticTipping(pubId: string, roundAddress: string | undefined) {
+export function useGetPostQuadraticTipping(roundAddress: string | undefined, pubId: string) {
   const chainId = useChainId();
   return useQuery(
-    ['getPostQuadraticTipping', pubId, roundAddress, chainId],
+    ['get-post-quadratic-tipping', pubId, roundAddress, chainId],
     async () => {
       if (!roundAddress) {
         return null;
@@ -575,17 +606,37 @@ export const useGetRoundMatchingUpdate = (roundId: string) => {
       );
     },
     {
+      refetchOnMount: false,
       refetchInterval: 20 * 1000,
       select: (response) => {
         const posts: Record<string, MatchingUpdateEntry> = {};
+        const matchStatsByProfileId: Record<
+          string,
+          { totalTippedInToken: number; totalMatchedInToken: number }
+        > = {};
 
         if (Array.isArray(response.data.data)) {
           for (const entry of response.data.data) {
             posts[entry.projectId] = entry;
+            const profileId = entry.projectId.split('-')[0];
+
+            // Profile does not exist yet in matchStatsByProfileId
+            if (!matchStatsByProfileId[profileId]) {
+              matchStatsByProfileId[profileId] = {
+                totalTippedInToken: parseFloat(entry.totalContributionsInToken),
+                totalMatchedInToken: entry.matchAmountInToken
+              };
+            } else {
+              matchStatsByProfileId[profileId].totalTippedInToken += parseFloat(
+                entry.totalContributionsInToken
+              );
+              matchStatsByProfileId[profileId].totalMatchedInToken += entry.matchAmountInToken;
+            }
           }
         }
         return {
-          posts
+          posts,
+          matchStatsByProfileId
         };
       }
     }

@@ -1,22 +1,21 @@
 import Loader from '@components/Shared/Loader';
 import TipsOutlineIcon from '@components/Shared/TipIcons/TipsOutlineIcon';
-import TipsSolidIcon from '@components/Shared/TipIcons/TipsSolidIcon';
 import { getTokenName } from '@components/utils/getTokenName';
 import { t } from '@lingui/macro';
-import { ethers } from 'ethers';
+import { BigNumber } from 'ethers';
+import { parseUnits } from 'ethers/lib/utils';
 import { motion } from 'framer-motion';
 import type { Publication } from 'lens';
 import humanize from 'lib/humanize';
 import nFormatter from 'lib/nFormatter';
 import dynamic from 'next/dynamic';
 import type { FC } from 'react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, Tooltip } from 'ui';
 import { useAccount, useChainId } from 'wagmi';
 
 import {
-  getPostQuadraticTipping,
-  getRoundInfo,
+  useGetPostQuadraticTipping,
   useGetPublicationMatchData,
   useGetRoundInfo
 } from './QuadraticQueries/grantsQueries';
@@ -31,47 +30,14 @@ interface TipProps {
 
 const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
   const { data: matchingData } = useGetPublicationMatchData(roundAddress, publication.id);
+  const { data: postQuadraticTipping } = useGetPostQuadraticTipping(roundAddress, publication.id);
   const { data: roundInfo } = useGetRoundInfo(roundAddress);
-  const chainId = useChainId();
-  const ownedBy = publication?.profile?.ownedBy;
+
   const { address } = useAccount();
-  const [userTipCount, setUserTipCount] = useState(0);
-  const [tipCount, setTipCount] = useState(0);
-  const [tipTotal, setTipTotal] = useState(ethers.BigNumber.from(0));
-  const [roundOpen, setRoundOpen] = useState(false);
   const [showTipModal, setShowTipModal] = useState(false);
 
-  useEffect(() => {
-    async function fetchPostQuadraticTipping() {
-      try {
-        const postQuadraticTipping = await getPostQuadraticTipping(chainId, publication?.id, roundAddress);
-
-        const { roundEndTime } = await getRoundInfo(chainId, postQuadraticTipping.id);
-        const now = Math.floor(Date.now() / 1000);
-        roundEndTime > now ? setRoundOpen(true) : setRoundOpen(false);
-        let tipTotal = ethers.BigNumber.from(0);
-        let tipCountFromUser = 0;
-        if (postQuadraticTipping && postQuadraticTipping.votes) {
-          for (const vote of postQuadraticTipping.votes) {
-            if (vote.amount) {
-              const weiAmount = ethers.BigNumber.from(vote.amount);
-              tipTotal = tipTotal.add(weiAmount);
-            }
-            if (vote.from.toLowerCase() === ownedBy!.toLowerCase()) {
-              tipCountFromUser++;
-            }
-          }
-        }
-        setUserTipCount(tipCountFromUser);
-        setTipTotal(tipTotal);
-        setTipCount(postQuadraticTipping?.votes?.length);
-      } catch (error) {
-        console.error('Error fetching post quadratic tipping:', error);
-        return null;
-      }
-    }
-    fetchPostQuadraticTipping();
-  }, [roundAddress, ownedBy, publication?.id, chainId]);
+  const tipCount = postQuadraticTipping?.votes.length || 0;
+  const roundOpen = roundInfo?.roundOpen || false;
 
   return (
     <>
@@ -101,33 +67,15 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
                 }
                 withDelay
               >
-                <div className="flex">
-                  {userTipCount > 0 ? (
-                    <TipsSolidIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
-                  ) : (
-                    <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
-                  )}
+                <div className="text-md">
+                  <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
                 </div>
               </Tooltip>
             </div>
           </div>
         </motion.button>
-        {tipCount > 0 && (
+        {!!(tipCount > 0 && matchingData && roundInfo) && (
           <div>
-            <span
-              className={`${
-                roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200'
-              } text-[11px] sm:text-xs`}
-            >
-              {nFormatter(userTipCount)}
-            </span>
-            <span
-              className={`${
-                roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200'
-              } mx-1 text-[11px] sm:text-xs`}
-            >
-              |
-            </span>
             <span
               className={`${
                 roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200'
@@ -165,7 +113,9 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
           roundAddress={roundAddress}
           setShowTipModal={setShowTipModal}
           tipCount={tipCount}
-          tipTotal={tipTotal}
+          tipTotal={BigNumber.from(
+            parseUnits(matchingData?.totalContributionsInToken.toString() || '0', 'ether')
+          )}
         />
       </Modal>
     </>
