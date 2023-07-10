@@ -65,8 +65,10 @@ const ViewQFRound: NextPage = () => {
         <Card className="p-4">
           <div className="text-lg font-bold">Welcome to QF Lenster!</div>
           <div className="text-md mt-2">
-            Quadratic Funding is the mathematically optimal way to fund public goods in a democratic
-            community.
+            <a href="https://wtfisqf.com/" className="text-brand" target="_blank" rel="noreferrer">
+              Quadratic Funding
+            </a>{' '}
+            is the mathematically optimal way to fund public goods in a democratic community.
           </div>
         </Card>
       </GridItemFour>

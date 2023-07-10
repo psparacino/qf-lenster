@@ -386,6 +386,7 @@ export async function getRoundQuadraticTipping(chainId: number, roundAddress: st
 }
 
 export interface RoundStats {
+  matchAmount: string;
   totalMatched: string;
   totalTipped: string;
   uniqueTippers: number;
@@ -495,6 +496,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
         const matchedInRound = formatEther(round.matchAmount);
 
         roundStatsByRound[round.id] = {
+          matchAmount: round.matchAmount,
           token: round.round.token,
           totalMatched: matchedInRound,
           totalTipped: formatEther(tippedInRound),

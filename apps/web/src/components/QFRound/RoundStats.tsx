@@ -12,6 +12,7 @@ import { formatDecimals } from '@components/utils/formatDecimals';
 import { getPolygonScanLink } from '@components/utils/getPolygonScanLink';
 import { getTokenName } from '@components/utils/getTokenName';
 import { t, Trans } from '@lingui/macro';
+import { formatEther } from 'ethers/lib/utils';
 import formatAddress from 'lib/formatAddress';
 import { Card } from 'ui';
 import type { Chain } from 'wagmi';
@@ -77,7 +78,7 @@ export const RoundStats = ({
           />
           <Item
             title={t`Total matching funds`}
-            value={`${formatDecimals(stats.totalMatched)} ${tokenName}`}
+            value={`${formatDecimals(formatEther(stats.matchAmount))} ${tokenName}`}
           />
           <Item title={t`Posts receiving tips`} value={postsReceivingTips} />
           <Item title={t`Unique tippers`} value={qfContributionSummary.uniqueContributors || '0'} />
