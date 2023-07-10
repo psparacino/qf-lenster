@@ -1,13 +1,13 @@
 import type { MatchingUpdateEntry } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
 import { useGetRoundInfo } from '@components/Publication/Actions/Tip/QuadraticQueries/grantsQueries';
 import SinglePublication from '@components/Publication/SinglePublication';
+import { formatDecimals } from '@components/utils/formatDecimals';
 import { getTokenName } from '@components/utils/getTokenName';
 import type { Publication } from 'lens';
 import { usePublicationQuery } from 'lens';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { useAppStore } from 'src/store/app';
-import { useChainId } from 'wagmi';
 
 export const PublicationRow = ({
   publicationId,
@@ -19,7 +19,6 @@ export const PublicationRow = ({
   matchingUpdateEntry?: MatchingUpdateEntry;
 }) => {
   const currentProfile = useAppStore((state) => state.currentProfile);
-  const chainId = useChainId();
   const { data: roundInfo } = useGetRoundInfo(roundAddress);
   const { push } = useRouter();
 
@@ -55,10 +54,10 @@ export const PublicationRow = ({
       />
       {!!(matchingUpdateEntry && roundInfo) && (
         <div className="font-grey-700 text-brand-600">
-          {matchingUpdateEntry?.totalContributionsInToken} {tokenName} by{' '}
+          {formatDecimals(matchingUpdateEntry?.totalContributionsInToken)} {tokenName} by{' '}
           {matchingUpdateEntry?.uniqueContributorsCount} tippers - receives{' '}
           {parseFloat((matchingUpdateEntry?.matchPoolPercentage * 100).toFixed(2))}% of matching funds (
-          {matchingUpdateEntry.matchAmountInToken} {tokenName})
+          {formatDecimals(matchingUpdateEntry.matchAmountInToken)} {tokenName})
         </div>
       )}
     </div>

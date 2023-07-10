@@ -266,6 +266,24 @@ export async function getRoundUserData(chainId: number, roundAddress: string, ad
 // POST QUERIES
 // ************
 
+interface PostQuadraticTippingData {
+  id: string;
+  votes: {
+    version: number;
+    to: string;
+    projectId: string;
+    token: string;
+    round: {
+      id: string;
+      roundEndTime: number;
+    }[];
+    id: string;
+    from: string;
+    createdAt: number;
+    amount: string;
+  }[];
+}
+
 export async function getPostQuadraticTipping(chainId: number, pubId: string, roundAddress: string) {
   const query = `
   query GetPostQuadraticTipping($roundAddressLower: ID!, $postId: String!) {
@@ -292,7 +310,9 @@ export async function getPostQuadraticTipping(chainId: number, pubId: string, ro
     postId: encodePublicationId(pubId)
   };
 
-  const data = await fetchGraphQL(chainId, query, variables);
+  const data = (await fetchGraphQL(chainId, query, variables)) as {
+    quadraticTipping: PostQuadraticTippingData;
+  };
   return data.quadraticTipping;
 }
 
@@ -366,6 +386,7 @@ export async function getRoundQuadraticTipping(chainId: number, roundAddress: st
 }
 
 export interface RoundStats {
+  matchAmount: string;
   totalMatched: string;
   totalTipped: string;
   uniqueTippers: number;
@@ -475,6 +496,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
         const matchedInRound = formatEther(round.matchAmount);
 
         roundStatsByRound[round.id] = {
+          matchAmount: round.matchAmount,
           token: round.round.token,
           totalMatched: matchedInRound,
           totalTipped: formatEther(tippedInRound),
