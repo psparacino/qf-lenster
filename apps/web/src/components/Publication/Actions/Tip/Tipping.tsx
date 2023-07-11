@@ -304,7 +304,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
           <div className="flex w-full flex-col">
             <div className="flex items-stretch">
               <input
-                className="mr-2 flex-grow rounded"
+                className="input-black mr-2 flex-grow rounded"
                 type="number"
                 step="0.0001"
                 min="0"
