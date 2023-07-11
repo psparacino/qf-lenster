@@ -40,7 +40,6 @@ interface Props {
   setRoundNotificationData: Dispatch<SetStateAction<string>>;
 }
 const findNodes = (nodeArray: TextNode[], keyArray: string[]) => {
-  console.log('findNodes', nodeArray, keyArray);
   return nodeArray.filter((node) => {
     return keyArray.find((key: string) => {
       return key == node.getKey();
@@ -109,7 +108,7 @@ const Editor: FC<Props> = ({
             for (const requirement of selectedQuadraticRound.requirements) {
               if (
                 node.getTextContent().includes(requirement) &&
-                localNotificationKeys.indexOf(node.getKey())
+                localNotificationKeys.indexOf(node.getKey()) < 0
               ) {
                 return true;
               }
@@ -129,14 +128,12 @@ const Editor: FC<Props> = ({
             for (const node of currentNotificationNodes) {
               if (!userEnteredNodes.map((userNode) => userNode.getKey()).includes(node.getKey())) {
                 node.remove(false);
-                localNotificationKeys.slice(localNotificationKeys.indexOf(node.getKey()), 1);
               }
             }
           } else if (currentNotificationNodes.length > 0 && userEnteredNodes.length == 0) {
             const newRequirements = selectedQuadraticRound.requirements.map((req) =>
               $createHashtagNode(req).setMode('token')
             );
-            console.log('current no user', currentNotificationNodes);
             for (let i = 0; i < currentNotificationNodes.length; i++) {
               if (i < selectedQuadraticRound.requirements.length && currentNotificationNodes.length > i) {
                 localNotificationKeys.push(newRequirements[i].getKey());
