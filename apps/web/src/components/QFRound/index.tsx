@@ -96,7 +96,7 @@ const ViewQFRound: NextPage = () => {
               className="text-brand font-bold"
             >
               QuadraticLenster.xyz
-            </a>{' '}
+            </a>
             , from July 17 2023 - July 21 2023, users can tip any post that mentions{' '}
             <span className="text-brand font-bold">#ethcc</span> + receive matching from the matching pool.
             This tipping functionality allows all Lenster users to reward creators and organizations they
