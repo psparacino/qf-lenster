@@ -47,11 +47,7 @@ export const PublicationRow = ({
         push(`/posts/${publicationId}`);
       }}
     >
-      <SinglePublication
-        showActions={false}
-        showThread={false}
-        publication={data.publication as Publication}
-      />
+      <SinglePublication showThread={false} publication={data.publication as Publication} />
       {!!(matchingUpdateEntry && roundInfo) && (
         <div className="font-grey-700 text-brand-600">
           {formatDecimals(matchingUpdateEntry?.totalContributionsInToken)} {tokenName} by{' '}
