@@ -475,7 +475,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
     return;
   };
-  console.log('publicationContent', publicationContent);
+
   const getMainContentFocus = () => {
     if (attachments.length > 0) {
       if (hasAudio) {
@@ -573,11 +573,8 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
   const insertHtml = async () => {
     if (roundNotificationData !== '') {
-      const index = publicationContent.indexOf(roundNotificationData);
-
-      const newContent = `${publicationContent}${createHtml(roundNotificationData)}${publicationContent.slice(
-        index + roundNotificationData.length
-      )}`;
+      // Keep the extra space at the end of the string below. Otherwise the last html character breaks the string
+      const newContent = `${publicationContent}${createHtml(roundNotificationData)} `;
       setPublicationContent(newContent);
       setNotificationKeys([]);
       setPublicationContentUpdated(true);
