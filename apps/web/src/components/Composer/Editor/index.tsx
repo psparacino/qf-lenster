@@ -19,7 +19,7 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { t, Trans } from '@lingui/macro';
 import Errors from 'data/errors';
-import type { LexicalEditor, LexicalNode, TextNode } from 'lexical';
+import type { LexicalEditor, TextNode } from 'lexical';
 import { $createParagraphNode, $getRoot } from 'lexical';
 import type { Dispatch, FC, SetStateAction } from 'react';
 import { useEffect, useRef } from 'react';
