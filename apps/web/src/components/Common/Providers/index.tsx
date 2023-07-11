@@ -14,6 +14,7 @@ import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
 import { WalletConnectLegacyConnector } from 'wagmi/connectors/walletConnectLegacy';
+import { infuraProvider } from 'wagmi/providers/infura';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
 
 import ErrorBoundary from '../ErrorBoundary';
@@ -26,7 +27,8 @@ const { chains, provider } = configureChains(
   [
     jsonRpcProvider({
       rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
-    })
+    }),
+    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID || '' })
   ]
 );
 

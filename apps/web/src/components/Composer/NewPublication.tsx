@@ -573,27 +573,15 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
   const insertHtml = async () => {
     if (roundNotificationData !== '') {
-      const index = publicationContent.indexOf(roundNotificationData);
-
-      const newContent = `${publicationContent}${createHtml(roundNotificationData)}${publicationContent.slice(
-        index + roundNotificationData.length
-      )}`;
+      // Keep the extra space at the end of the string below. Otherwise the last html character breaks the string
+      const newContent = `${publicationContent}${createHtml(roundNotificationData)} `;
       setPublicationContent(newContent);
       setNotificationKeys([]);
       setPublicationContentUpdated(true);
+    } else {
+      setPublicationContentUpdated(true);
     }
   };
-
-  // const insertHtml = async () => {
-  //   if (roundNotificationData !== '') {
-  //     const newContent = `${publicationContent}${createHtml(roundNotificationData)}`;
-
-  //     setPublicationContent(newContent);
-  //     setNotificationKeys([]);
-  //     setPublicationContentUpdated(true);
-  //   }
-  // };
-
   const createPublication = async () => {
     removeUpdateListener();
     if (!currentProfile) {
@@ -685,7 +673,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       } else {
         arweaveId = await createMetadata(metadata);
       }
-
       const request: CreatePublicPostRequest | CreatePublicCommentRequest = {
         profileId: currentProfile?.id,
         contentURI: `ar://${arweaveId}`,
@@ -704,7 +691,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
                 }
               }
       };
-
       if (currentProfile?.dispatcher?.canUseRelay) {
         return await createViaDispatcher(request);
       }

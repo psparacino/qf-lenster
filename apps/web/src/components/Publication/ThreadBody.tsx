@@ -38,9 +38,8 @@ const ThreadBody: FC<ThreadBodyProps> = ({ publication, roundAddress, setRoundAd
                 roundAddress={roundAddress}
                 setRoundAddress={setRoundAddress}
               />
-              {roundAddress && roundAddress.length > 0 && (
-                <PublicationActions publication={publication} roundAddress={roundAddress} />
-              )}
+
+              <PublicationActions publication={publication} roundAddress={roundAddress} />
             </>
           )}
         </div>
