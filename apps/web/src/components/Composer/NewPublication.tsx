@@ -585,7 +585,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       setPublicationContentUpdated(true);
     }
   };
-
   const createPublication = async () => {
     removeUpdateListener();
     if (!currentProfile) {
@@ -648,6 +647,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
         altTag: attachment.original.altTag
       }));
 
+      console.log('publicationContent', publicationContent);
       const metadata: PublicationMetadataV2Input = {
         version: '2.0.0',
         metadata_id: uuid(),
@@ -742,7 +742,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
   };
 
   const isLoading = loading || typedDataLoading || writeLoading;
-
+  console.log('OUTSIDE', publicationContent);
   return (
     <Card className={clsx({ 'rounded-none border-none': !isComment }, 'pb-3')}>
       {error && <ErrorMessage className="mb-3" title={t`Transaction failed!`} error={error} />}

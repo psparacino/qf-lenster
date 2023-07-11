@@ -66,7 +66,7 @@ const SinglePublication: FC<SinglePublicationProps> = ({
               roundAddress={roundAddress}
               setRoundAddress={setRoundAddress}
             />
-            {showActions && roundAddress && (
+            {showActions && (
               <PublicationActions
                 publication={rootPublication}
                 electedMirror={feedItem?.electedMirror as ElectedMirror}
