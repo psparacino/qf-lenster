@@ -56,7 +56,7 @@ import {
   useCreatePostTypedDataMutation,
   useCreatePostViaDispatcherMutation
 } from 'lens';
-import { $createParagraphNode, $getRoot, TextNode } from 'lexical';
+import { $getRoot, TextNode } from 'lexical';
 import getSignature from 'lib/getSignature';
 import getTags from 'lib/getTags';
 import dynamic from 'next/dynamic';
