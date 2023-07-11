@@ -1,11 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@components/utils/hooks/useDebounce';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
 import dayjs from 'dayjs';
 import { BigNumber } from 'ethers';
-import { formatEther } from 'ethers/lib/utils';
+import { formatEther, parseUnits } from 'ethers/lib/utils';
+import { useEffect, useState } from 'react';
 import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
-import { useChainId } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 
 import { decodePublicationId, encodePublicationId } from '../utils';
 
@@ -266,6 +268,24 @@ export async function getRoundUserData(chainId: number, roundAddress: string, ad
 // POST QUERIES
 // ************
 
+interface PostQuadraticTippingData {
+  id: string;
+  votes: {
+    version: number;
+    to: string;
+    projectId: string;
+    token: string;
+    round: {
+      id: string;
+      roundEndTime: number;
+    }[];
+    id: string;
+    from: string;
+    createdAt: number;
+    amount: string;
+  }[];
+}
+
 export async function getPostQuadraticTipping(chainId: number, pubId: string, roundAddress: string) {
   const query = `
   query GetPostQuadraticTipping($roundAddressLower: ID!, $postId: String!) {
@@ -292,7 +312,9 @@ export async function getPostQuadraticTipping(chainId: number, pubId: string, ro
     postId: encodePublicationId(pubId)
   };
 
-  const data = await fetchGraphQL(chainId, query, variables);
+  const data = (await fetchGraphQL(chainId, query, variables)) as {
+    quadraticTipping: PostQuadraticTippingData;
+  };
   return data.quadraticTipping;
 }
 
@@ -366,6 +388,7 @@ export async function getRoundQuadraticTipping(chainId: number, roundAddress: st
 }
 
 export interface RoundStats {
+  matchAmount: string;
   totalMatched: string;
   totalTipped: string;
   uniqueTippers: number;
@@ -475,6 +498,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
         const matchedInRound = formatEther(round.matchAmount);
 
         roundStatsByRound[round.id] = {
+          matchAmount: round.matchAmount,
           token: round.round.token,
           totalMatched: matchedInRound,
           totalTipped: formatEther(tippedInRound),
@@ -641,6 +665,86 @@ export const useGetRoundMatchingUpdate = (roundId: string) => {
       }
     }
   );
+};
+
+interface RoundMatchAmountPreview {
+  currentMatchAmountInToken: number;
+  newMatchAmountInToken: number;
+  differenceMatchAmountInToken: number;
+  differenceMatchPoolPercentage: number;
+  token: string;
+  contributor: string;
+  publicationId: string;
+  roundId: string;
+}
+
+export const useGetRoundMatchAmountPreviewByProjectId = ({
+  roundId,
+  projectId,
+  tipAmountWei,
+  token,
+  debounceMS = 0
+}: {
+  roundId: string;
+  projectId: string;
+  tipAmountWei: string;
+  token: string;
+  debounceMS?: number;
+}) => {
+  const chainId = useChainId();
+  const { address } = useAccount();
+  const queryClient = useQueryClient();
+
+  const [debouncedTipAmountWei, setDebouncedTipAmountWeiWei] = useState('0');
+  const queryKey = ['round-matching-preview', roundId, projectId, chainId, debouncedTipAmountWei];
+
+  useEffect(() => {
+    if (debouncedTipAmountWei !== parseUnits(tipAmountWei).toString()) {
+      queryClient.cancelQueries(queryKey);
+    }
+  }, [debouncedTipAmountWei, tipAmountWei]);
+
+  useDebounce(
+    () => {
+      setDebouncedTipAmountWeiWei(tipAmountWei);
+    },
+    debounceMS,
+    [tipAmountWei]
+  );
+
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      if (parseFloat(debouncedTipAmountWei) === 0) {
+        return null;
+      }
+
+      if (!address || !token || !roundId || !projectId) {
+        return null;
+      }
+
+      return axios.get<ApiResult<RoundMatchAmountPreview>>(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/preview/${chainId}/${roundId}/${projectId}`,
+        {
+          signal: signal,
+          params: {
+            tipAmount: debouncedTipAmountWei,
+            token,
+            contributor: address
+          }
+        }
+      );
+    },
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    select: (response) => {
+      if (!response?.data.success) {
+        return null;
+      }
+
+      return response.data.data;
+    }
+  });
 };
 
 export const useGetManyPublicationMatchData = (roundId: string, publicationIds: string[]) => {

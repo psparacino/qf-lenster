@@ -1,4 +1,5 @@
 import TipsSolidIcon from '@components/Shared/TipIcons/TipsSolidIcon';
+import { formatDecimals } from '@components/utils/formatDecimals';
 import { getTokenName } from '@components/utils/getTokenName';
 import { QuestionMarkCircleIcon } from '@heroicons/react/outline';
 import { ethers } from 'ethers';
@@ -44,43 +45,44 @@ export const NotificationBanner: FC<Props> = ({ publication, showCount, roundAdd
   const getDaysAgo = (end: number) => {
     const current = Date.now();
     const diffTime = Math.abs(current - end * 1000);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
+
+  if (!postQuadraticTipping || !matchUpdate || !roundInfo) {
+    return null;
+  }
+
+  const tokenName = getTokenName(roundInfo?.token);
+  const formattedTipTotal = formatDecimals(ethers.utils.formatEther(postQuadraticTipping.voteTipTotal));
+  const formattedMatchAmount = formatDecimals(matchUpdate.matchAmountInToken);
 
   return (
     <Card>
       <div className="justify-items-left m-3 grid space-y-2 p-5">
-        <div className="flex">
-          <div className="mt-1 flex">
-            <TipsSolidIcon color="black" />
-          </div>
-          <div className="ml-3">
-            {`This post has received ${postQuadraticTipping?.votes.length} ${
-              postQuadraticTipping?.votes.length === 1 ? 'tip' : 'tips'
+        <div className="flex items-center">
+          <TipsSolidIcon color="black" />
+          <span className="ml-2">
+            {`This post has received ${postQuadraticTipping.votes.length} ${
+              postQuadraticTipping.votes.length === 1 ? 'tip' : 'tips'
             }! `}
-          </div>
+          </span>
         </div>
 
-        {!!(matchUpdate && roundInfo && postQuadraticTipping) && (
-          <div>
-            This post has received {ethers.utils.formatEther(postQuadraticTipping?.voteTipTotal)} in tips from{' '}
-            {matchUpdate.uniqueContributorsCount} users. It received {matchUpdate.matchAmountInToken}{' '}
-            {getTokenName(roundInfo.token)} in matching.
+        <div>
+          This post has received {formattedTipTotal} {tokenName} in tips from{' '}
+          {matchUpdate.uniqueContributorsCount} users. It received {formattedMatchAmount} {tokenName} in
+          matching.
+        </div>
+        <div className="flex justify-between pt-3">
+          <div className="my-auto flex items-center justify-between text-sm text-gray-500">
+            <p className="mr-3">
+              {roundInfo.roundEndTime !== 0 && Date.now() < roundInfo.roundEndTime * 1000
+                ? `This matching round will end in ${getTimeLeft(roundInfo.roundEndTime)}`
+                : `This round ended ${getDaysAgo(roundInfo.roundEndTime)} day(s) ago.`}
+            </p>
+            <QuestionMarkCircleIcon className={iconClassName} />
           </div>
-        )}
-        {roundInfo && (
-          <div className="flex justify-between pt-3">
-            <div className="my-auto flex items-center justify-between text-sm text-gray-500">
-              <p className="mr-3">
-                {roundInfo.roundEndTime !== 0 && Date.now() < roundInfo.roundEndTime * 1000
-                  ? `This matching round will end in ${getTimeLeft(roundInfo.roundEndTime)}`
-                  : `This round ended ${getDaysAgo(roundInfo.roundEndTime)} day(s) ago.`}
-              </p>
-              <QuestionMarkCircleIcon className={iconClassName} />
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </Card>
   );

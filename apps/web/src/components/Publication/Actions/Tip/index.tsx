@@ -1,5 +1,7 @@
 import Loader from '@components/Shared/Loader';
 import TipsOutlineIcon from '@components/Shared/TipIcons/TipsOutlineIcon';
+import TipsSolidIcon from '@components/Shared/TipIcons/TipsSolidIcon';
+import { formatDecimals } from '@components/utils/formatDecimals';
 import { getTokenName } from '@components/utils/getTokenName';
 import { t } from '@lingui/macro';
 import { BigNumber } from 'ethers';
@@ -38,6 +40,11 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
 
   const tipCount = postQuadraticTipping?.votes.length || 0;
   const roundOpen = roundInfo?.roundOpen || false;
+  const currentUserTippedPublication = postQuadraticTipping?.votes.some(
+    (vote) => vote.from === address?.toLowerCase()
+  );
+
+  const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
 
   return (
     <>
@@ -67,8 +74,12 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
                 }
                 withDelay
               >
-                <div className="text-md">
-                  <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
+                <div className="flex">
+                  {currentUserTippedPublication ? (
+                    <TipsSolidIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
+                  ) : (
+                    <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
+                  )}
                 </div>
               </Tooltip>
             </div>
@@ -76,22 +87,24 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
         </motion.button>
         {!!(tipCount > 0 && matchingData && roundInfo) && (
           <div>
-            <span
-              className={`${
-                roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200'
-              } text-[11px] sm:text-xs`}
-            >
-              {nFormatter(tipCount)}
-            </span>
+            <Tooltip placement="top" content="Number of unique contributors" withDelay>
+              <span className={`${textColor} px-2 text-[11px] sm:text-xs`}>
+                {nFormatter(matchingData.uniqueContributorsCount)}
+              </span>
+            </Tooltip>
+            <span className={`${textColor} text-[11px]`}>|</span>
+            <Tooltip placement="top" content="Total number of tips" withDelay>
+              <span className={`${textColor} px-2 text-[11px] sm:text-xs`}>{nFormatter(tipCount)}</span>
+            </Tooltip>
             {matchingData && (
-              <span
-                className={`${
-                  roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200'
-                } ml-3 text-[11px] sm:text-xs`}
-              >
+              <span className={`${textColor} ml-2 text-[11px] sm:text-xs`}>
                 {roundOpen
-                  ? `Match estimate ${matchingData.matchAmountInToken} ${getTokenName(roundInfo.token)}`
-                  : `Matched with ${matchingData.matchAmountInToken} ${getTokenName(roundInfo.token)}`}
+                  ? `Match estimate ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
+                      roundInfo.token
+                    )}`
+                  : `Matched with ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
+                      roundInfo.token
+                    )}`}
               </span>
             )}
           </div>
