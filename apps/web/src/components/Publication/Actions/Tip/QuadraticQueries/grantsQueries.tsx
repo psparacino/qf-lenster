@@ -1,11 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@components/utils/hooks/useDebounce';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
 import dayjs from 'dayjs';
 import { BigNumber } from 'ethers';
-import { formatEther } from 'ethers/lib/utils';
+import { formatEther, parseUnits } from 'ethers/lib/utils';
+import { useEffect, useState } from 'react';
 import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
-import { useChainId } from 'wagmi';
+import { useAccount, useChainId } from 'wagmi';
 
 import { decodePublicationId, encodePublicationId } from '../utils';
 
@@ -663,6 +665,86 @@ export const useGetRoundMatchingUpdate = (roundId: string) => {
       }
     }
   );
+};
+
+interface RoundMatchAmountPreview {
+  currentMatchAmountInToken: number;
+  newMatchAmountInToken: number;
+  differenceMatchAmountInToken: number;
+  differenceMatchPoolPercentage: number;
+  token: string;
+  contributor: string;
+  publicationId: string;
+  roundId: string;
+}
+
+export const useGetRoundMatchAmountPreviewByProjectId = ({
+  roundId,
+  projectId,
+  tipAmountWei,
+  token,
+  debounceMS = 0
+}: {
+  roundId: string;
+  projectId: string;
+  tipAmountWei: string;
+  token: string;
+  debounceMS?: number;
+}) => {
+  const chainId = useChainId();
+  const { address } = useAccount();
+  const queryClient = useQueryClient();
+
+  const [debouncedTipAmountWei, setDebouncedTipAmountWeiWei] = useState('0');
+  const queryKey = ['round-matching-preview', roundId, projectId, chainId, debouncedTipAmountWei];
+
+  useEffect(() => {
+    if (debouncedTipAmountWei !== parseUnits(tipAmountWei).toString()) {
+      queryClient.cancelQueries(queryKey);
+    }
+  }, [debouncedTipAmountWei, tipAmountWei]);
+
+  useDebounce(
+    () => {
+      setDebouncedTipAmountWeiWei(tipAmountWei);
+    },
+    debounceMS,
+    [tipAmountWei]
+  );
+
+  return useQuery({
+    queryKey,
+    queryFn: ({ signal }) => {
+      if (parseFloat(debouncedTipAmountWei) === 0) {
+        return null;
+      }
+
+      if (!address || !token || !roundId || !projectId) {
+        return null;
+      }
+
+      return axios.get<ApiResult<RoundMatchAmountPreview>>(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/api/v1/data/match/preview/${chainId}/${roundId}/${projectId}`,
+        {
+          signal: signal,
+          params: {
+            tipAmount: debouncedTipAmountWei,
+            token,
+            contributor: address
+          }
+        }
+      );
+    },
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    select: (response) => {
+      if (!response?.data.success) {
+        return null;
+      }
+
+      return response.data.data;
+    }
+  });
 };
 
 export const useGetManyPublicationMatchData = (roundId: string, publicationIds: string[]) => {

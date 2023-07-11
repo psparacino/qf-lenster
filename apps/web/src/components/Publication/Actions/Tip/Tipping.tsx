@@ -1,5 +1,7 @@
 import Markup from '@components/Shared/Markup';
 import Uniswap from '@components/Shared/UniswapTip';
+import { formatDecimals } from '@components/utils/formatDecimals';
+import { getTokenName } from '@components/utils/getTokenName';
 import { ClockIcon, MinusIcon, PuzzleIcon, UsersIcon, ViewGridAddIcon } from '@heroicons/react/outline';
 import { CheckCircleIcon } from '@heroicons/react/solid';
 import { formatTime } from '@lib/formatTime';
@@ -11,6 +13,7 @@ import { RoundImplementation } from 'abis';
 import dayjs from 'dayjs';
 import type { BigNumber } from 'ethers';
 import { ethers } from 'ethers';
+import { parseUnits } from 'ethers/lib/utils';
 import type { Publication } from 'lens';
 import getAssetAddress from 'lib/getAssetAddress';
 import getTokenImage from 'lib/getTokenImage';
@@ -19,7 +22,7 @@ import type { Dispatch, FC } from 'react';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
-import { Button, Spinner, WarningMessage } from 'ui';
+import { Button, Card, Spinner, WarningMessage } from 'ui';
 import {
   useBalance,
   useContractRead,
@@ -30,7 +33,11 @@ import {
 } from 'wagmi';
 
 import TipsOutlineIcon from '../../../Shared/TipIcons/TipsOutlineIcon';
-import { getRoundInfo, getRoundMetadata } from './QuadraticQueries/grantsQueries';
+import {
+  getRoundInfo,
+  getRoundMetadata,
+  useGetRoundMatchAmountPreviewByProjectId
+} from './QuadraticQueries/grantsQueries';
 import { encodePublicationId } from './utils';
 
 interface Props {
@@ -283,6 +290,18 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     setTipAmount(value);
   }
 
+  const {
+    data: matchPreview,
+    isFetching: isFetchingMatchPreview,
+    isError: isErrorMatchPreview
+  } = useGetRoundMatchAmountPreviewByProjectId({
+    roundId: roundAddress,
+    projectId: publication?.id,
+    tipAmountWei: parseUnits(tipAmount).toString(),
+    token: roundInfo.token,
+    debounceMS: 1000
+  });
+
   return roundInfoLoaded ? (
     <div className="p-5">
       <div className="mb-2 flex items-center space-x-2">
@@ -314,6 +333,32 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
                 <div className="flex items-center">{roundContractAllowed ? 'Tip!' : 'Approve Tip'}</div>
               </Button>
             </div>
+
+            <Card
+              as="aside"
+              className="!bg-brand-300 border-brand-400 text-brand-600 mt-4 space-y-2.5 !bg-opacity-20 px-5 py-3"
+            >
+              {isFetchingMatchPreview ? (
+                <div className="flex w-full items-center">
+                  Estimating
+                  <Spinner size="sm" className="ml-2" variant="primary" />
+                </div>
+              ) : (
+                <span>
+                  {!isErrorMatchPreview ? (
+                    <>
+                      Estimated matching for tip:{' '}
+                      <b>
+                        {formatDecimals(matchPreview?.differenceMatchAmountInToken || 0)}{' '}
+                        {getTokenName(roundInfo.token)}
+                      </b>
+                    </>
+                  ) : (
+                    'Error estimating matching'
+                  )}
+                </span>
+              )}
+            </Card>
 
             {roundContractAllowed && (
               <div className="mt-2 flex w-full justify-end text-xs">
