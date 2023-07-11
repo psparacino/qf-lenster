@@ -320,7 +320,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
               />
               <Button
                 onClick={roundContractAllowed ? () => write() : () => handleAllowance()}
-                disabled={isLoading || tipAmount === '0'}
+                disabled={isLoading || tipAmount === '0' || isFetchingMatchPreview}
                 icon={
                   isLoading || transactionLoading || writeLoading || roundContractAllowancePending ? (
                     <Spinner size="xs" />
@@ -437,7 +437,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
           <div className="flex items-center space-x-2">
             <PuzzleIcon className="lt-text-gray-500 h-4 w-4" />
 
-            <div>Round Name: {roundInfo.metadata.name} </div>
+            <div>Round Name: {roundInfo.metadata?.name} </div>
           </div>
         </div>
         <div className="item-center block space-y-1 sm:flex sm:space-x-5">
