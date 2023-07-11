@@ -56,7 +56,7 @@ import {
   useCreatePostTypedDataMutation,
   useCreatePostViaDispatcherMutation
 } from 'lens';
-import { $getRoot, TextNode } from 'lexical';
+import { $createParagraphNode, $getRoot, TextNode } from 'lexical';
 import getSignature from 'lib/getSignature';
 import getTags from 'lib/getTags';
 import dynamic from 'next/dynamic';
@@ -114,7 +114,7 @@ interface NewPublicationProps {
 }
 
 export function createHtml(data: string): string {
-  return `<span className="hidden"> ${data} </span> `;
+  return `\n \n <span className="hidden"> ${data} </span> `;
 }
 
 const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
