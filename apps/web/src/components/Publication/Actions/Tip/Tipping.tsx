@@ -215,7 +215,6 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     let iface = new ethers.utils.Interface(abi);
 
     const maxAllowance = ethers.constants.MaxUint256.toHexString();
-
     const approveVotingStrategy = iface.encodeFunctionData('approve', [
       roundInfo.votingStrategy.id,
       revokeAllowance ? revokeAllowance : maxAllowance
@@ -239,10 +238,6 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     abi: RoundImplementation,
     functionName: 'vote',
     args: [[encodedData]],
-    overrides: {
-      from: address as `0x${string}`,
-      value: ethers.utils.parseEther(tipAmount)
-    },
     mode: 'recklesslyUnprepared',
     onSuccess: () => {
       toast.success(t`Tip submitted successfully!`);
@@ -408,7 +403,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
             className="h-7 w-7"
             height={28}
             width={28}
-            src={getTokenImage('wmatic')}
+            src={getTokenImage('wmatic')} // ALERT. can change here.
             alt={tipTotal.toString()}
             title={tipTotal.toString()}
           />
