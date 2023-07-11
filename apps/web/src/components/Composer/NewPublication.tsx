@@ -581,18 +581,10 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       setPublicationContent(newContent);
       setNotificationKeys([]);
       setPublicationContentUpdated(true);
+    } else {
+      setPublicationContentUpdated(true);
     }
   };
-
-  // const insertHtml = async () => {
-  //   if (roundNotificationData !== '') {
-  //     const newContent = `${publicationContent}${createHtml(roundNotificationData)}`;
-
-  //     setPublicationContent(newContent);
-  //     setNotificationKeys([]);
-  //     setPublicationContentUpdated(true);
-  //   }
-  // };
 
   const createPublication = async () => {
     removeUpdateListener();
@@ -685,7 +677,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       } else {
         arweaveId = await createMetadata(metadata);
       }
-
       const request: CreatePublicPostRequest | CreatePublicCommentRequest = {
         profileId: currentProfile?.id,
         contentURI: `ar://${arweaveId}`,
@@ -704,7 +695,6 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
                 }
               }
       };
-
       if (currentProfile?.dispatcher?.canUseRelay) {
         return await createViaDispatcher(request);
       }
