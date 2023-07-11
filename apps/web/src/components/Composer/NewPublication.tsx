@@ -475,7 +475,7 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
 
     return;
   };
-
+  console.log('publicationContent', publicationContent);
   const getMainContentFocus = () => {
     if (attachments.length > 0) {
       if (hasAudio) {
