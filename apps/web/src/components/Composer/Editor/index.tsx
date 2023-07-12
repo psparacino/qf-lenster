@@ -91,6 +91,7 @@ const Editor: FC<Props> = ({
 
   useEffect(() => {
     const prevQuadraticRound = prevQuadraticRoundRef;
+    let localNotificationKeys = notificationKeys;
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
       let roundNotificationText: string;
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
@@ -107,7 +108,7 @@ const Editor: FC<Props> = ({
             for (const requirement of selectedQuadraticRound.requirements) {
               if (
                 node.getTextContent().includes(requirement) &&
-                notificationKeys.filter((key) => node.getKey() == key)?.length == 0
+                localNotificationKeys.indexOf(node.getKey()) < 0
               ) {
                 return true;
               }
@@ -117,42 +118,44 @@ const Editor: FC<Props> = ({
 
           //if node contains required text add node key to notification array.
           if (userEnteredNodes) {
-            setNotificationKeys([...notificationKeys, ...userEnteredNodes.map((node) => node.getKey())]);
+            const userNodeKeys = userEnteredNodes.map((node) => node.getKey());
+            localNotificationKeys.push(...userNodeKeys);
+            setNotificationKeys(localNotificationKeys);
           }
-          const currentNotificationNodes = findNodes(contentNodes, notificationKeys);
+          const currentNotificationNodes = findNodes(contentNodes, localNotificationKeys);
 
-          if (currentNotificationNodes && userEnteredNodes) {
+          if (currentNotificationNodes.length > 0 && userEnteredNodes.length > 0) {
             for (const node of currentNotificationNodes) {
-              node.remove(false);
-              notificationKeys.slice(notificationKeys.indexOf(node.getKey()), 1);
+              if (!userEnteredNodes.map((userNode) => userNode.getKey()).includes(node.getKey())) {
+                node.remove(false);
+              }
             }
-            for (const node of userEnteredNodes) {
-              node.remove(false);
-              notificationKeys.slice(notificationKeys.indexOf(node.getKey()), 1);
-            }
-            const newRequirements = selectedQuadraticRound.requirements.map((requirement) =>
-              $createHashtagNode(requirement)
+          } else if (currentNotificationNodes.length > 0 && userEnteredNodes.length == 0) {
+            const newRequirements = selectedQuadraticRound.requirements.map((req) =>
+              $createHashtagNode(req).setMode('token')
             );
-
-            root.append($createParagraphNode().append(...newRequirements));
-            setNotificationKeys([
-              ...newRequirements.map((req) => {
-                return req.getKey();
-              })
-            ]);
+            for (let i = 0; i < currentNotificationNodes.length; i++) {
+              if (i < selectedQuadraticRound.requirements.length && currentNotificationNodes.length > i) {
+                localNotificationKeys.push(newRequirements[i].getKey());
+                currentNotificationNodes[i].replace(newRequirements[i]);
+              } else {
+                currentNotificationNodes[i].remove(false);
+              }
+            }
+            setNotificationKeys(localNotificationKeys);
           } else {
-            root.append(
-              $createParagraphNode().append(
-                ...selectedQuadraticRound.requirements.map((req) => $createHashtagNode(req))
-              )
+            const newNotifications = selectedQuadraticRound.requirements.map((req) =>
+              $createHashtagNode(req).setMode('token')
             );
-            console.log(notificationKeys);
+            localNotificationKeys.push(...newNotifications.map((note) => note.getKey()));
+            root.append($createParagraphNode().append(...newNotifications));
+            setNotificationKeys(localNotificationKeys);
           }
 
-          for (let i = 0; i < 1; i++) {
-            const emptyParagraph = $createParagraphNode();
-            root.append(emptyParagraph);
-          }
+          // for (let i = 0; i < 1; i++) {
+          //   const emptyParagraph = $createParagraphNode();
+          //   root.append(emptyParagraph);
+          // }
 
           toast.success(`Post added to ${selectedQuadraticRound.name}!`);
         });
