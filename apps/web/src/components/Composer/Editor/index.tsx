@@ -95,7 +95,7 @@ const Editor: FC<Props> = ({
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
       let roundNotificationText: string;
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
-        roundNotificationText = `This post is included in the ${selectedQuadraticRound.name} round (${selectedQuadraticRound.id}) on Quadratic Lenster`;
+        roundNotificationText = `This post is included in the ${selectedQuadraticRound.name} round (${selectedQuadraticRound.id}) at quadraticlenster.xyz`;
 
         setRoundNotificationData(roundNotificationText);
 
