@@ -36,12 +36,24 @@ const { chains, provider } = configureChains(
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
-    new WalletConnectLegacyConnector({ chains, options: {} })
+    new WalletConnectLegacyConnector({
+      chains,
+      //@ts-ignore #TODO remove ignores to see issues
+      options: { qrcode: true, projectId: process.env.WALLETCONNECT_PROJECT_ID! }
+    })
   ];
 };
 
+// const connector = new WalletConnectConnector({
+//   options: {
+//     projectId: process.env.WALLETCONNECT_PROJECT_ID!,
+//     showQrModal: true
+//   }
+// });
+
 const wagmiClient = createClient({
   autoConnect: true,
+  //@ts-ignore
   connectors,
   provider
 });
