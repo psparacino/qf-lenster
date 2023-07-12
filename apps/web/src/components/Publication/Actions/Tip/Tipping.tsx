@@ -1,3 +1,4 @@
+import { PendingVoteContext } from '@components/Common/Providers/PendingVotesProvider';
 import Markup from '@components/Shared/Markup';
 import Uniswap from '@components/Shared/UniswapTip';
 import { formatDecimals } from '@components/utils/formatDecimals';
@@ -19,12 +20,13 @@ import getAssetAddress from 'lib/getAssetAddress';
 import getTokenImage from 'lib/getTokenImage';
 import humanize from 'lib/humanize';
 import type { Dispatch, FC } from 'react';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAppStore } from 'src/store/app';
 import { Button, Card, Spinner, WarningMessage } from 'ui';
 import {
   useBalance,
+  useChainId,
   useContractRead,
   useContractWrite,
   useNetwork,
@@ -229,6 +231,10 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     });
   };
 
+  const { startMonitorVote } = useContext(PendingVoteContext);
+
+  const chainId = useChainId();
+
   const {
     isLoading: writeLoading,
     data,
@@ -239,7 +245,16 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     functionName: 'vote',
     args: [[encodedData]],
     mode: 'recklesslyUnprepared',
-    onSuccess: () => {
+    onSuccess: async (txHash) => {
+      const result = await txHash.wait();
+      if (publication) {
+        startMonitorVote({
+          chainId,
+          roundId: roundAddress,
+          publicationId: publication?.id,
+          blockNumber: result.blockNumber
+        });
+      }
       toast.success(t`Tip submitted successfully!`);
       setShowTipModal!(false);
     }
@@ -304,7 +319,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
           <div className="flex w-full flex-col">
             <div className="flex items-stretch">
               <input
-                className="mr-2 flex-grow rounded"
+                className="mr-2 flex-grow rounded text-black"
                 type="number"
                 step="0.0001"
                 min="0"
@@ -312,6 +327,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
                 placeholder="How much do you want to tip?"
                 value={inputValue}
                 onChange={handleChange}
+                disabled={isLoading || writeLoading}
               />
               <Button
                 onClick={roundContractAllowed ? () => write() : () => handleAllowance()}

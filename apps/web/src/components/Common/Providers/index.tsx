@@ -1,3 +1,4 @@
+import { PendingVoteContextProvider } from '@components/Common/Providers/PendingVotesProvider';
 import getLivepeerTheme from '@lib/getLivepeerTheme';
 import { initLocale } from '@lib/i18n';
 import { i18n } from '@lingui/core';
@@ -14,6 +15,7 @@ import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
 import { WalletConnectLegacyConnector } from 'wagmi/connectors/walletConnectLegacy';
+import { infuraProvider } from 'wagmi/providers/infura';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
 
 import ErrorBoundary from '../ErrorBoundary';
@@ -26,7 +28,8 @@ const { chains, provider } = configureChains(
   [
     jsonRpcProvider({
       rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
-    })
+    }),
+    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID || '' })
   ]
 );
 
@@ -63,11 +66,13 @@ const Providers = ({ children }: { children: ReactNode }) => {
           <WagmiConfig client={wagmiClient}>
             <ApolloProvider client={apolloClient}>
               <QueryClientProvider client={queryClient}>
-                <LivepeerConfig client={livepeerClient} theme={getLivepeerTheme}>
-                  <ThemeProvider defaultTheme="light" attribute="class">
-                    <Layout>{children}</Layout>
-                  </ThemeProvider>
-                </LivepeerConfig>
+                <PendingVoteContextProvider>
+                  <LivepeerConfig client={livepeerClient} theme={getLivepeerTheme}>
+                    <ThemeProvider defaultTheme="light" attribute="class">
+                      <Layout>{children}</Layout>
+                    </ThemeProvider>
+                  </LivepeerConfig>
+                </PendingVoteContextProvider>
                 <ReactQueryDevtools />
               </QueryClientProvider>
             </ApolloProvider>
