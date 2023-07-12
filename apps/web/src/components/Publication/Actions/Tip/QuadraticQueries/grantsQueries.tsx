@@ -1,3 +1,4 @@
+import { PendingVoteContext } from '@components/Common/Providers/PendingVotesProvider';
 import { useDebounce } from '@components/utils/hooks/useDebounce';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
@@ -5,7 +6,7 @@ import { PRODUCTION_GRANTS_URL, SANDBOX_GRANTS_URL } from 'data/constants';
 import dayjs from 'dayjs';
 import { BigNumber } from 'ethers';
 import { formatEther, parseUnits } from 'ethers/lib/utils';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
 import { useAccount, useChainId } from 'wagmi';
 
@@ -22,7 +23,7 @@ const getGraphEndpoint = (chainId: number) => {
   }
 };
 
-async function fetchGraphQL(chainId: number, query: string, variables: any = {}) {
+export async function fetchGraphQL(chainId: number, query: string, variables: any = {}) {
   const graphEndpoint = getGraphEndpoint(chainId);
   const apiClient = axios.create({
     baseURL: graphEndpoint,
@@ -614,7 +615,7 @@ export interface MatchingUpdateEntry {
   uniqueContributorsCount: number;
 }
 
-type ApiResult<T> = {
+export type ApiResult<T> = {
   data: T;
   success: boolean;
 };
@@ -851,4 +852,19 @@ export const useGetQFContributionSummary = (roundId: string) => {
       }
     }
   );
+};
+
+export const useAccountHasVotePending = (publicationId?: string) => {
+  const { publicationsWithPendingVote } = useContext(PendingVoteContext);
+  if (!publicationId || !publicationsWithPendingVote[publicationId]) {
+    return {
+      pending: false,
+      status: undefined
+    };
+  }
+
+  return {
+    pending: true,
+    status: publicationsWithPendingVote[publicationId].status
+  };
 };
