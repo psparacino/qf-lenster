@@ -13,10 +13,11 @@ import nFormatter from 'lib/nFormatter';
 import dynamic from 'next/dynamic';
 import type { FC } from 'react';
 import React, { useState } from 'react';
-import { Modal, Tooltip } from 'ui';
+import { Modal, Spinner, Tooltip } from 'ui';
 import { useAccount } from 'wagmi';
 
 import {
+  useAccountHasVotePending,
   useGetPostQuadraticTipping,
   useGetPublicationMatchData,
   useGetRoundInfo
@@ -45,6 +46,7 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
   );
 
   const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
+  const { pending, status } = useAccountHasVotePending(publication.id);
 
   return (
     <>
@@ -86,27 +88,38 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
           </div>
         </motion.button>
         {!!(tipCount > 0 && matchingData && roundInfo) && (
-          <div>
+          <div className="flex items-center">
             <Tooltip placement="top" content="Number of unique contributors" withDelay>
-              <span className={`${textColor} px-2 text-[11px] sm:text-xs`}>
+              <div className={`${textColor} px-2 text-[11px] sm:text-xs`}>
                 {nFormatter(matchingData.uniqueContributorsCount)}
-              </span>
+              </div>
             </Tooltip>
-            <span className={`${textColor} text-[11px]`}>|</span>
+            <div className={`${textColor} text-[11px]`}>|</div>
             <Tooltip placement="top" content="Total number of tips" withDelay>
-              <span className={`${textColor} px-2 text-[11px] sm:text-xs`}>{nFormatter(tipCount)}</span>
+              <div className={`${textColor} px-2 text-[11px] sm:text-xs`}>{nFormatter(tipCount)}</div>
             </Tooltip>
-            {matchingData && (
-              <span className={`${textColor} ml-2 text-[11px] sm:text-xs`}>
-                {roundOpen
-                  ? `Match estimate ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
-                      roundInfo.token
-                    )}`
-                  : `Matched with ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
-                      roundInfo.token
-                    )}`}
-              </span>
-            )}
+
+            <div className="flex items-center">
+              {matchingData && (
+                <span className={`${textColor} ml-2 text-[11px] sm:text-xs`}>
+                  {roundOpen
+                    ? `Match estimate ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
+                        roundInfo.token
+                      )}`
+                    : `Matched with ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
+                        roundInfo.token
+                      )}`}
+                </span>
+              )}
+              {pending && (
+                <Tooltip content="Your tip is pending" placement="top" withDelay>
+                  <span className={`${textColor} flex items-center px-2 text-[11px] sm:text-xs`}>
+                    <Spinner size="xs" className={`ml-2 mr-2 ${textColor}`} variant="danger" />
+                    {status === 'indexing' ? 'Indexing tip' : 'Calculating tip amount...'}
+                  </span>
+                </Tooltip>
+              )}
+            </div>
           </div>
         )}
       </div>

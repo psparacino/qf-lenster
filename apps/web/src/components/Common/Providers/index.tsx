@@ -1,3 +1,4 @@
+import { PendingVoteContextProvider } from '@components/Common/Providers/PendingVotesProvider';
 import getLivepeerTheme from '@lib/getLivepeerTheme';
 import { initLocale } from '@lib/i18n';
 import { i18n } from '@lingui/core';
@@ -65,11 +66,13 @@ const Providers = ({ children }: { children: ReactNode }) => {
           <WagmiConfig client={wagmiClient}>
             <ApolloProvider client={apolloClient}>
               <QueryClientProvider client={queryClient}>
-                <LivepeerConfig client={livepeerClient} theme={getLivepeerTheme}>
-                  <ThemeProvider defaultTheme="light" attribute="class">
-                    <Layout>{children}</Layout>
-                  </ThemeProvider>
-                </LivepeerConfig>
+                <PendingVoteContextProvider>
+                  <LivepeerConfig client={livepeerClient} theme={getLivepeerTheme}>
+                    <ThemeProvider defaultTheme="light" attribute="class">
+                      <Layout>{children}</Layout>
+                    </ThemeProvider>
+                  </LivepeerConfig>
+                </PendingVoteContextProvider>
                 <ReactQueryDevtools />
               </QueryClientProvider>
             </ApolloProvider>
