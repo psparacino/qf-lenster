@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
-import { WalletConnectLegacyConnector } from 'wagmi/connectors/walletConnectLegacy';
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 import { infuraProvider } from 'wagmi/providers/infura';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
 
@@ -36,25 +36,16 @@ const { chains, provider } = configureChains(
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
-    new WalletConnectLegacyConnector({
+    new WalletConnectConnector({
       chains,
-      //@ts-ignore #TODO remove ignores to see issues
-      options: { qrcode: true, projectId: process.env.WALLETCONNECT_PROJECT_ID! }
+      options: { projectId: process.env.WALLETCONNECT_PROJECT_ID! }
     })
   ];
 };
 
-// const connector = new WalletConnectConnector({
-//   options: {
-//     projectId: process.env.WALLETCONNECT_PROJECT_ID!,
-//     showQrModal: true
-//   }
-// });
-
 const wagmiClient = createClient({
   autoConnect: true,
-  //@ts-ignore
-  connectors,
+  connectors: connectors,
   provider
 });
 
