@@ -110,7 +110,6 @@ const Editor: FC<Props> = ({
                 node.getTextContent().includes(requirement) &&
                 localNotificationKeys.indexOf(node.getKey()) < 0
               ) {
-                console.log('user node');
                 return true;
               }
               return false;
@@ -124,26 +123,21 @@ const Editor: FC<Props> = ({
             setNotificationKeys(localNotificationKeys);
           }
           const currentNotificationNodes = findNodes(contentNodes, localNotificationKeys);
-          console.log('current nodes', currentNotificationNodes);
           if (currentNotificationNodes.length > 0 && userEnteredNodes.length > 0) {
-            console.log('current and user');
             for (const node of currentNotificationNodes) {
               if (!userEnteredNodes.map((userNode) => userNode.getKey()).includes(node.getKey())) {
                 node.remove(false);
               }
             }
           } else if (currentNotificationNodes.length > 0 && userEnteredNodes.length == 0) {
-            console.log('current no user');
             const newRequirements = selectedQuadraticRound.requirements.map((req) =>
               $createHashtagNode(req).setMode('token')
             );
             for (let i = 0; i < currentNotificationNodes.length; i++) {
               if (i < selectedQuadraticRound.requirements.length && currentNotificationNodes.length > i) {
-                console.log('replace');
                 localNotificationKeys.push(newRequirements[i].getKey());
                 currentNotificationNodes[i].replace(newRequirements[i]);
               } else {
-                console.log('remove');
                 currentNotificationNodes[i].remove(false);
               }
             }
@@ -152,8 +146,8 @@ const Editor: FC<Props> = ({
             const newNotifications = selectedQuadraticRound.requirements.map((req) =>
               $createHashtagNode(req).setMode('token')
             );
-            localNotificationKeys.push(...newNotifications.map((note) => note.getKey()));
             root.append($createParagraphNode().append(...newNotifications));
+            localNotificationKeys.push(...newNotifications.map((note) => note.getKey()));
             setNotificationKeys(localNotificationKeys);
           }
 
@@ -166,7 +160,6 @@ const Editor: FC<Props> = ({
         });
       } else {
         editor.update(() => {
-          console.log('else');
           const textNodes = $getRoot().getAllTextNodes();
           for (const node of textNodes) {
             if (
