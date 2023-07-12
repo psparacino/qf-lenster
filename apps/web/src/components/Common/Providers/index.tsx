@@ -32,21 +32,22 @@ const { chains, provider } = configureChains(
     infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID || '' })
   ]
 );
+
 //#TODO see why wallet connect id is not being passed to core relayer
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
     new WalletConnectConnector({
       chains,
-      options: { projectId: process.env.WALLETCONNECT_PROJECT_ID! }
+      options: { projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID! }
     })
   ];
 };
 
 const wagmiClient = createClient({
   autoConnect: true,
-  connectors: connectors,
-  provider
+  provider,
+  connectors: connectors
 });
 
 const livepeerClient = createReactClient({
