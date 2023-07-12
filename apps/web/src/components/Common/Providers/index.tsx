@@ -32,7 +32,7 @@ const { chains, provider } = configureChains(
     infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID || '' })
   ]
 );
-
+//#TODO see why wallet connect id is not being passed to core relayer
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
