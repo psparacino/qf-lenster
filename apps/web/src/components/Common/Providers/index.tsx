@@ -33,7 +33,6 @@ const { chains, provider } = configureChains(
   ]
 );
 
-//#TODO see why wallet connect id is not being passed to core relayer
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
