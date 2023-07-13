@@ -87,6 +87,7 @@ const Editor: FC<Props> = ({
         setPublicationContent(updatedPublicationContent);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showNewPostModal, setRoundNotificationData, editor]);
 
   useEffect(() => {
@@ -95,7 +96,13 @@ const Editor: FC<Props> = ({
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
       let roundNotificationText: string;
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
-        roundNotificationText = `This post is included in the ${selectedQuadraticRound.name} round (${selectedQuadraticRound.id}) at quadraticlenster.xyz`;
+        let roundName = selectedQuadraticRound.name;
+
+        if (/round$/i.test(roundName.trim())) {
+          roundName = roundName.replace(/\sround$/i, '');
+        }
+
+        roundNotificationText = `This post is included in the ${roundName} round (${selectedQuadraticRound.id}) at quadraticlenster.xyz`;
 
         setRoundNotificationData(roundNotificationText);
 

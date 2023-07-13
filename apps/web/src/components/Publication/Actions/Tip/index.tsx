@@ -70,7 +70,7 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
                 content={
                   roundOpen
                     ? tipCount > 0
-                      ? `${humanize(tipCount)} Total Tips by YOU!`
+                      ? `${humanize(tipCount)} Total Tips`
                       : 'Quadratically Tip!'
                     : 'Quadratic Round Completed!'
                 }
