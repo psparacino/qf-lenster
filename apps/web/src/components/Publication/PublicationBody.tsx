@@ -36,17 +36,25 @@ const PublicationBody: FC<PublicationBodyProps> = ({ publication, roundAddress, 
       const secondPattern =
         /This post is included in the (.*?) round \((0x[\dA-Fa-f]{40})\) on Quadratic Lenster/;
 
+      const thirdPattern =
+        /This post is included in the (.*?) round \((0x[\dA-Fa-f]{40})\) at quadraticlenster.xyz/;
+
       let match = cleanInput.match(pattern);
 
       if (!match) {
         match = cleanInput.match(secondPattern);
-      } else {
+      }
+
+      if (!match) {
+        match = cleanInput.match(thirdPattern);
+      }
+
+      if (!match) {
         console.log('No Ethereum address found');
       }
 
       return match ? match[2] : null;
     }
-
     if (
       content &&
       setRoundAddress &&
