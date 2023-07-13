@@ -19,6 +19,7 @@ import type { Publication } from 'lens';
 import getAssetAddress from 'lib/getAssetAddress';
 import getTokenImage from 'lib/getTokenImage';
 import humanize from 'lib/humanize';
+import Link from 'next/link';
 import type { Dispatch, FC } from 'react';
 import { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -369,6 +370,18 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
                   )}
                 </span>
               )}
+            </Card>
+            <Card
+              as="aside"
+              className="mt-2 space-y-2.5 border-green-400 !bg-green-300 !bg-opacity-20 px-5 py-3 text-green-600"
+            >
+              Follow{' '}
+              <Link href={'/u/owocki'}>
+                <span className="from-brand-600 dark:from-brand-400 bg-gradient-to-r to-pink-600 bg-clip-text font-bold text-transparent dark:to-pink-400">
+                  owocki.lens
+                </span>
+              </Link>{' '}
+              for notifications about payouts
             </Card>
 
             {roundContractAllowed && (

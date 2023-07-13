@@ -118,7 +118,7 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
               <Tooltip content="Your tip is pending" placement="top" withDelay>
                 <span className={`${textColor} flex items-center px-2 text-[11px] sm:text-xs`}>
                   <Spinner size="xs" className={`ml-2 mr-2 ${textColor}`} variant="danger" />
-                  {status === 'indexing' ? 'Indexing tip' : 'Calculating tip amount...'}
+                  {status === 'indexing' ? 'Indexing tip' : 'Calculating match'}
                 </span>
               </Tooltip>
             )}
