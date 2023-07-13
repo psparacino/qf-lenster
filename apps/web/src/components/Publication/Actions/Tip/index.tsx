@@ -87,41 +87,43 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
             </div>
           </div>
         </motion.button>
-        {!!(tipCount > 0 && matchingData && roundInfo) && (
-          <div className="flex items-center">
-            <Tooltip placement="top" content="Number of unique contributors" withDelay>
-              <div className={`${textColor} px-2 text-[11px] sm:text-xs`}>
-                {nFormatter(matchingData.uniqueContributorsCount)}
-              </div>
-            </Tooltip>
-            <div className={`${textColor} text-[11px]`}>|</div>
-            <Tooltip placement="top" content="Total number of tips" withDelay>
-              <div className={`${textColor} px-2 text-[11px] sm:text-xs`}>{nFormatter(tipCount)}</div>
-            </Tooltip>
+        <div className="flex items-center">
+          {!!(tipCount > 0 && matchingData) && (
+            <>
+              <Tooltip placement="top" content="Number of unique contributors" withDelay>
+                <div className={`${textColor} px-2 text-[11px] sm:text-xs`}>
+                  {nFormatter(matchingData.uniqueContributorsCount)}
+                </div>
+              </Tooltip>
+              <div className={`${textColor} text-[11px]`}>|</div>
+              <Tooltip placement="top" content="Total number of tips" withDelay>
+                <div className={`${textColor} px-2 text-[11px] sm:text-xs`}>{nFormatter(tipCount)}</div>
+              </Tooltip>
+            </>
+          )}
 
-            <div className="flex items-center">
-              {matchingData && (
-                <span className={`${textColor} ml-2 text-[11px] sm:text-xs`}>
-                  {roundOpen
-                    ? `Match estimate ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
-                        roundInfo.token
-                      )}`
-                    : `Matched with ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
-                        roundInfo.token
-                      )}`}
+          <div className="flex items-center">
+            {matchingData && roundInfo && tipCount > 0 && (
+              <span className={`${textColor} ml-2 text-[11px] sm:text-xs`}>
+                {roundOpen
+                  ? `Match estimate ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
+                      roundInfo.token
+                    )}`
+                  : `Matched with ${formatDecimals(matchingData.matchAmountInToken)} ${getTokenName(
+                      roundInfo.token
+                    )}`}
+              </span>
+            )}
+            {pending && (
+              <Tooltip content="Your tip is pending" placement="top" withDelay>
+                <span className={`${textColor} flex items-center px-2 text-[11px] sm:text-xs`}>
+                  <Spinner size="xs" className={`ml-2 mr-2 ${textColor}`} variant="danger" />
+                  {status === 'indexing' ? 'Indexing tip' : 'Calculating tip amount...'}
                 </span>
-              )}
-              {pending && (
-                <Tooltip content="Your tip is pending" placement="top" withDelay>
-                  <span className={`${textColor} flex items-center px-2 text-[11px] sm:text-xs`}>
-                    <Spinner size="xs" className={`ml-2 mr-2 ${textColor}`} variant="danger" />
-                    {status === 'indexing' ? 'Indexing tip' : 'Calculating tip amount...'}
-                  </span>
-                </Tooltip>
-              )}
-            </div>
+              </Tooltip>
+            )}
           </div>
-        )}
+        </div>
       </div>
       <Modal
         title={t`Tipping`}

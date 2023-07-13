@@ -855,8 +855,28 @@ export const useGetQFContributionSummary = (roundId: string) => {
 };
 
 export const useAccountHasVotePending = (publicationId?: string) => {
+  const { address } = useAccount();
   const { publicationsWithPendingVote } = useContext(PendingVoteContext);
-  if (!publicationId || !publicationsWithPendingVote[publicationId]) {
+
+  if (!publicationId || !address) {
+    return {
+      pending: false,
+      status: undefined
+    };
+  }
+
+  const pendingData = publicationsWithPendingVote[publicationId];
+
+  // No vote pending for publication
+  if (!pendingData) {
+    return {
+      pending: false,
+      status: undefined
+    };
+  }
+
+  // Vote pending for another user
+  if (!(pendingData.userAddress === address.toLowerCase())) {
     return {
       pending: false,
       status: undefined
