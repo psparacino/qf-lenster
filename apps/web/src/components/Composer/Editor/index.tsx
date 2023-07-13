@@ -20,7 +20,7 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { t, Trans } from '@lingui/macro';
 import Errors from 'data/errors';
 import type { LexicalEditor, TextNode } from 'lexical';
-import { $createParagraphNode, $getRoot } from 'lexical';
+import { $createLineBreakNode, $createParagraphNode, $getRoot } from 'lexical';
 import type { Dispatch, FC, SetStateAction } from 'react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
@@ -155,6 +155,16 @@ const Editor: FC<Props> = ({
             root.append($createParagraphNode().append(...newNotifications));
             localNotificationKeys.push(...newNotifications.map((note) => note.getKey()));
             setNotificationKeys(localNotificationKeys);
+          }
+
+          const lastChild = root.getChildren()[root.getChildren().length - 1];
+          const lastNodeSize = lastChild.getTextContentSize();
+
+          if (lastNodeSize > 1) {
+            for (let i = 0; i < 1; i++) {
+              console.log('append');
+              root.append($createParagraphNode().append($createLineBreakNode()));
+            }
           }
 
           toast.success(`Post added to ${selectedQuadraticRound.name}!`);
