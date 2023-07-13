@@ -114,7 +114,7 @@ interface NewPublicationProps {
 }
 
 export function createHtml(data: string): string {
-  return `<span className="hidden"> ${data} </span> `;
+  return `\n \n <span className="hidden"> ${data} </span> `;
 }
 
 const NewPublication: FC<NewPublicationProps> = ({ publication }) => {

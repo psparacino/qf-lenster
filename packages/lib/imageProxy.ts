@@ -7,6 +7,7 @@ import { STATIC_ASSETS_URL } from 'data/constants';
  * @param name The transformation name (optional).
  * @returns A URL for the image that is compatible with imgproxy.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const imageProxy = (url: string, name?: string): string => {
   if (!url) {
     return '';
