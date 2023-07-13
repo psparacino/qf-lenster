@@ -162,7 +162,6 @@ const Editor: FC<Props> = ({
 
           if (lastNodeSize > 1) {
             for (let i = 0; i < 1; i++) {
-              console.log('append');
               root.append($createParagraphNode().append($createLineBreakNode()));
             }
           }
