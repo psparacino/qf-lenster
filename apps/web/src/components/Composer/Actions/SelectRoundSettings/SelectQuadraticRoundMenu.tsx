@@ -24,8 +24,6 @@ const SelectQuadraticRoundMenu = ({
     return <div className="text-center text-gray-500">No active funding rounds available.</div>;
   }
 
-  console.log(selectedQuadraticRound, activeRounds);
-
   return (
     <Menu as="div" className="flex flex-col items-center justify-center">
       {({ open }) => (
