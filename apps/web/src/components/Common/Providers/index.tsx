@@ -15,8 +15,9 @@ import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
-import { infuraProvider } from 'wagmi/providers/infura';
+import { alchemyProvider } from 'wagmi/providers/alchemy';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
+import { publicProvider } from 'wagmi/providers/public';
 
 import ErrorBoundary from '../ErrorBoundary';
 import Layout from '../Layout';
@@ -26,6 +27,11 @@ import TelemetryProvider from './TelemetryProvider';
 const { chains, provider } = configureChains(
   [IS_MAINNET ? polygon : polygonMumbai, mainnet],
   [
+    alchemyProvider({
+      apiKey: IS_MAINNET
+        ? process.env.NEXT_PUBLIC_ALCHEMY_KEY_MAINNET!
+        : process.env.NEXT_PUBLIC_ALCHEMY_KEY_MUMBAI!
+    }),
     jsonRpcProvider({
       rpc: (chain) => {
         const rpcURLs: Record<number, string> = {
@@ -36,10 +42,7 @@ const { chains, provider } = configureChains(
         return { http: rpcURLs[chain.id] };
       }
     }),
-    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID! }),
-    jsonRpcProvider({
-      rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
-    })
+    publicProvider()
   ]
 );
 
