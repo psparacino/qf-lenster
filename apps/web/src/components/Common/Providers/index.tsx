@@ -27,7 +27,11 @@ import TelemetryProvider from './TelemetryProvider';
 const { chains, provider } = configureChains(
   [IS_MAINNET ? polygon : polygonMumbai, mainnet],
   [
-    alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY! }),
+    alchemyProvider({
+      apiKey: IS_MAINNET
+        ? process.env.NEXT_PUBLIC_ALCHEMY_KEY_MAINNET!
+        : process.env.NEXT_PUBLIC_ALCHEMY_KEY_MUMBAI!
+    }),
     jsonRpcProvider({
       rpc: (chain) => {
         const rpcURLs: Record<number, string> = {
