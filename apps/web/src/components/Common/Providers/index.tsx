@@ -27,9 +27,19 @@ const { chains, provider } = configureChains(
   [IS_MAINNET ? polygon : polygonMumbai, mainnet],
   [
     jsonRpcProvider({
-      rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
+      rpc: (chain) => {
+        const rpcURLs: Record<number, string> = {
+          137: `https://poly-mainnet.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID!}`,
+          80001: `https://polygon-mumbai.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID!}`
+        };
+
+        return { http: rpcURLs[chain.id] };
+      }
     }),
-    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID || '' })
+    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID! }),
+    jsonRpcProvider({
+      rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
+    })
   ]
 );
 
