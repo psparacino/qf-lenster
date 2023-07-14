@@ -413,7 +413,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     quadraticTippings(
       orderBy: round__createdAt,
       orderDirection:desc,
-      where: { round_: { roundEndTime_lte: $unixTimestamp } }
+      where: { round_: { roundEndTime_gte: $unixTimestamp } }
     ) {
       id
       matchAmount
@@ -437,7 +437,8 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
     }
   }`;
 
-  const unixNow = Math.floor(Date.now() / 1000 + 60 * 60 * 24 * 7).toString();
+  // Get all rounds that have ended in the last week
+  const unixNow = Math.floor(Date.now() / 1000 - 60 * 60 * 24 * 7).toString();
   const variables = {
     unixTimestamp: unixNow
   };
@@ -855,8 +856,28 @@ export const useGetQFContributionSummary = (roundId: string) => {
 };
 
 export const useAccountHasVotePending = (publicationId?: string) => {
+  const { address } = useAccount();
   const { publicationsWithPendingVote } = useContext(PendingVoteContext);
-  if (!publicationId || !publicationsWithPendingVote[publicationId]) {
+
+  if (!publicationId || !address) {
+    return {
+      pending: false,
+      status: undefined
+    };
+  }
+
+  const pendingData = publicationsWithPendingVote[publicationId];
+
+  // No vote pending for publication
+  if (!pendingData) {
+    return {
+      pending: false,
+      status: undefined
+    };
+  }
+
+  // Vote pending for another user
+  if (!(pendingData.userAddress === address.toLowerCase())) {
     return {
       pending: false,
       status: undefined

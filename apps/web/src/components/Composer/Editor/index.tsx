@@ -20,7 +20,7 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { t, Trans } from '@lingui/macro';
 import Errors from 'data/errors';
 import type { LexicalEditor, TextNode } from 'lexical';
-import { $createParagraphNode, $getRoot } from 'lexical';
+import { $createLineBreakNode, $createParagraphNode, $getRoot } from 'lexical';
 import type { Dispatch, FC, SetStateAction } from 'react';
 import { useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
@@ -87,6 +87,7 @@ const Editor: FC<Props> = ({
         setPublicationContent(updatedPublicationContent);
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showNewPostModal, setRoundNotificationData, editor]);
 
   useEffect(() => {
@@ -95,51 +96,55 @@ const Editor: FC<Props> = ({
     if (selectedQuadraticRound.id !== prevQuadraticRound.current) {
       let roundNotificationText: string;
       if (selectedQuadraticRound.id !== '' && !editor.getEditorState().isEmpty()) {
-        roundNotificationText = `This post is included in the ${selectedQuadraticRound.name} round (${selectedQuadraticRound.id}) on Quadratic Lenster`;
+        let roundName = selectedQuadraticRound.name;
+
+        if (/round$/i.test(roundName.trim())) {
+          roundName = roundName.replace(/\sround$/i, '');
+        }
+
+        roundNotificationText = `This post is included in the ${roundName} round (${selectedQuadraticRound.id}) at quadraticlenster.xyz`;
 
         setRoundNotificationData(roundNotificationText);
 
         editor.update(() => {
           const root = $getRoot();
           const contentNodes = root.getAllTextNodes();
-
           //see if nodes contain required text
-          let userEnteredNodes = contentNodes.filter((node) => {
+          let currentHashtags = contentNodes
+            .filter((node) => node.getType() == 'hashtag')
+            .map((node) => node.setMode('token'));
+          const validNodes = currentHashtags.filter((node) => {
             for (const requirement of selectedQuadraticRound.requirements) {
-              if (
-                node.getTextContent().includes(requirement) &&
-                localNotificationKeys.indexOf(node.getKey()) < 0
-              ) {
+              if (node.getTextContent() == requirement) {
                 return true;
               }
               return false;
             }
           });
-
           //if node contains required text add node key to notification array.
-          if (userEnteredNodes) {
-            const userNodeKeys = userEnteredNodes.map((node) => node.getKey());
-            localNotificationKeys.push(...userNodeKeys);
-            setNotificationKeys(localNotificationKeys);
+          if (validNodes.length > 0) {
+            const validNodeKeys = validNodes.map((node) => node.getKey());
+            localNotificationKeys.push(...validNodeKeys);
           }
-          const currentNotificationNodes = findNodes(contentNodes, localNotificationKeys);
 
-          if (currentNotificationNodes.length > 0 && userEnteredNodes.length > 0) {
-            for (const node of currentNotificationNodes) {
-              if (!userEnteredNodes.map((userNode) => userNode.getKey()).includes(node.getKey())) {
+          if (currentHashtags.length > 0 && validNodes.length > 0) {
+            for (const node of validNodes) {
+              //remove invalid nodes
+              if (!currentHashtags.map((currentNode) => currentNode.getKey()).includes(node.getKey())) {
                 node.remove(false);
               }
             }
-          } else if (currentNotificationNodes.length > 0 && userEnteredNodes.length == 0) {
+            setNotificationKeys(localNotificationKeys);
+          } else if (currentHashtags.length > 0 && validNodes.length == 0) {
             const newRequirements = selectedQuadraticRound.requirements.map((req) =>
               $createHashtagNode(req).setMode('token')
             );
-            for (let i = 0; i < currentNotificationNodes.length; i++) {
-              if (i < selectedQuadraticRound.requirements.length && currentNotificationNodes.length > i) {
+            for (const [i, currentHashtag] of currentHashtags.entries()) {
+              if (i < newRequirements.length) {
                 localNotificationKeys.push(newRequirements[i].getKey());
-                currentNotificationNodes[i].replace(newRequirements[i]);
+                currentHashtag.replace(newRequirements[i]);
               } else {
-                currentNotificationNodes[i].remove(false);
+                currentHashtag.remove(false);
               }
             }
             setNotificationKeys(localNotificationKeys);
@@ -147,15 +152,19 @@ const Editor: FC<Props> = ({
             const newNotifications = selectedQuadraticRound.requirements.map((req) =>
               $createHashtagNode(req).setMode('token')
             );
-            localNotificationKeys.push(...newNotifications.map((note) => note.getKey()));
             root.append($createParagraphNode().append(...newNotifications));
+            localNotificationKeys.push(...newNotifications.map((note) => note.getKey()));
             setNotificationKeys(localNotificationKeys);
           }
 
-          // for (let i = 0; i < 1; i++) {
-          //   const emptyParagraph = $createParagraphNode();
-          //   root.append(emptyParagraph);
-          // }
+          const lastChild = root.getChildren()[root.getChildren().length - 1];
+          const lastNodeSize = lastChild.getTextContentSize();
+
+          if (lastNodeSize > 1) {
+            for (let i = 0; i < 1; i++) {
+              root.append($createParagraphNode().append($createLineBreakNode()));
+            }
+          }
 
           toast.success(`Post added to ${selectedQuadraticRound.name}!`);
         });

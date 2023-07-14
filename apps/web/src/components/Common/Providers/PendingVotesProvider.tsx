@@ -10,7 +10,7 @@ import { useAccount, useChainId } from 'wagmi';
 type Status = 'indexing' | 'pending-calculation';
 
 export const PendingVoteContext = createContext<{
-  publicationsWithPendingVote: Record<string, { status: Status }>;
+  publicationsWithPendingVote: Record<string, { status: Status; userAddress: string }>;
   startMonitorVote: (args: {
     publicationId: string;
     blockNumber: number;
@@ -25,7 +25,7 @@ export const PendingVoteContext = createContext<{
 const usePendingVotes = () => {
   const chainId = useChainId();
   const blockNumberStorageKey = 'publicationBlockNumbers';
-  const { address } = useAccount();
+  const { address: loggedInAddress } = useAccount();
 
   const queryClient = useQueryClient();
 
@@ -38,6 +38,7 @@ const usePendingVotes = () => {
         chainId: number;
         roundId: string;
         status: Status;
+        userAddress: string;
       }
     >;
 
@@ -52,6 +53,10 @@ const usePendingVotes = () => {
     roundId: string;
     chainId: number;
   }) => {
+    if (!loggedInAddress) {
+      console.log('No address, not starting monitor vote');
+      return;
+    }
     // Add block number to local storage dictionary
     const blockNumbers = getBlockNumbers();
     blockNumbers[publicationId] = {
@@ -59,7 +64,8 @@ const usePendingVotes = () => {
       publicationId,
       chainId,
       roundId,
-      status: 'indexing'
+      status: 'indexing',
+      userAddress: loggedInAddress.toLowerCase()
     };
     localStorage.setItem(blockNumberStorageKey, JSON.stringify(blockNumbers));
   };
@@ -67,14 +73,18 @@ const usePendingVotes = () => {
   useQuery(
     ['publication-block-numbers', chainId],
     async () => {
-      if (!address) {
+      if (!loggedInAddress) {
         return null;
       }
 
       const publicationBlockNumbers = getBlockNumbers();
 
+      if (!Object.keys(publicationBlockNumbers).length) {
+        return null;
+      }
+
       const query = `
-        query GetVotesByBlockNumber {
+        query GetMostRecentBlockNumber {
            _meta {
              block {
                number,
@@ -84,11 +94,7 @@ const usePendingVotes = () => {
         }
       `;
 
-      const variables = {
-        from: address
-      };
-
-      const results = (await fetchGraphQL(chainId, query, variables)) as {
+      const results = (await fetchGraphQL(chainId, query)) as {
         qfvotes: { projectId: string; id: string; createdAt: string };
         _meta: {
           block: {
@@ -119,7 +125,7 @@ const usePendingVotes = () => {
       }[] = [];
 
       for (const [publicationId] of publicationsToCheck.entries()) {
-        const { roundId } = publicationBlockNumbers[publicationId];
+        const { roundId, userAddress } = publicationBlockNumbers[publicationId];
         const mostRecentVoteQuery = `
           query GetMostRecentVote($from: String!, $round: String!, $projectId: String!) {
             qfvotes(
@@ -133,7 +139,7 @@ const usePendingVotes = () => {
           }`;
 
         const variables = {
-          from: address.toLowerCase(),
+          from: userAddress.toLowerCase(),
           round: roundId,
           projectId: encodePublicationId(publicationId)
         };
@@ -146,7 +152,7 @@ const usePendingVotes = () => {
           apiData.push({
             mostRecentCreatedAt: parseInt(mostRecentVoteResult.qfvotes[0].createdAt),
             publicationId: publicationId,
-            from: address.toLowerCase(),
+            from: userAddress.toLowerCase(),
             roundId
           });
         }
@@ -216,7 +222,7 @@ const usePendingVotes = () => {
       },
       refetchInterval: 5000,
       refetchOnMount: false,
-      enabled: !!address
+      enabled: !!loggedInAddress
     }
   );
 
@@ -225,6 +231,7 @@ const usePendingVotes = () => {
     startMonitorVote
   };
 };
+
 export const PendingVoteContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { pendingVotes, startMonitorVote } = usePendingVotes();
   return (

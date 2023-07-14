@@ -110,7 +110,9 @@ const ViewQFRound: NextPage = () => {
           <p>
             Follow{' '}
             <Link href={'/u/owocki'}>
-              <span className="text-brand font-bold">owocki.lens</span>
+              <span className="from-brand-600 dark:from-brand-400 bg-gradient-to-r to-pink-600 bg-clip-text font-bold text-transparent dark:to-pink-400">
+                owocki.lens
+              </span>
             </Link>{' '}
             for notifications when payouts happen.
           </p>

@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 import { configureChains, createClient, WagmiConfig } from 'wagmi';
 import { mainnet, polygon, polygonMumbai } from 'wagmi/chains';
 import { InjectedConnector } from 'wagmi/connectors/injected';
-import { WalletConnectLegacyConnector } from 'wagmi/connectors/walletConnectLegacy';
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect';
 import { infuraProvider } from 'wagmi/providers/infura';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc';
 
@@ -27,23 +27,36 @@ const { chains, provider } = configureChains(
   [IS_MAINNET ? polygon : polygonMumbai, mainnet],
   [
     jsonRpcProvider({
-      rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
+      rpc: (chain) => {
+        const rpcURLs: Record<number, string> = {
+          137: `https://poly-mainnet.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID!}`,
+          80001: `https://polygon-mumbai.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID!}`
+        };
+
+        return { http: rpcURLs[chain.id] };
+      }
     }),
-    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID || '' })
+    infuraProvider({ apiKey: process.env.NEXT_PUBLIC_INFURA_ID! }),
+    jsonRpcProvider({
+      rpc: (chain) => ({ http: `https://rpc.brovider.xyz/${chain.id}` })
+    })
   ]
 );
 
 const connectors = () => {
   return [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
-    new WalletConnectLegacyConnector({ chains, options: {} })
+    new WalletConnectConnector({
+      chains,
+      options: { projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID! }
+    })
   ];
 };
 
 const wagmiClient = createClient({
   autoConnect: true,
-  connectors,
-  provider
+  provider,
+  connectors: connectors
 });
 
 const livepeerClient = createReactClient({
