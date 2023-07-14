@@ -763,10 +763,10 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
           <AccessSettings />
           {!isComment && (
             <SelectRoundSettings
-              selectedQuadraticRound={selectedQuadraticRound}
               setSelectedQuadraticRound={setSelectedQuadraticRound}
               setManuallySelectedRound={setManuallySelectedRound}
               activeRounds={activeRounds}
+              selectedQuadraticRound={selectedQuadraticRound}
             />
           )}
           {selectedQuadraticRound.requirements.length > 0 && (

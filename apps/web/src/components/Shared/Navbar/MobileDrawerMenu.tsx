@@ -1,3 +1,4 @@
+import Support from '@components/Shared/Navbar/NavItems/Support';
 import { XIcon } from '@heroicons/react/outline';
 import { Trans } from '@lingui/macro';
 import type { Profile } from 'lens';
@@ -13,11 +14,9 @@ import { Image } from 'ui';
 
 import Slug from '../Slug';
 import AppVersion from './NavItems/AppVersion';
-import Contact from './NavItems/Contact';
 import Logout from './NavItems/Logout';
 import Mod from './NavItems/Mod';
 import ModMode from './NavItems/ModMode';
-import ReportBug from './NavItems/ReportBug';
 import Settings from './NavItems/Settings';
 import StaffMode from './NavItems/StaffMode';
 import Status from './NavItems/Status';
@@ -92,8 +91,7 @@ const MobileDrawerMenu: FC = () => {
         <div className="bg-white dark:bg-gray-900">
           <div className="divider" />
           <div>
-            <Contact className="py-3 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={closeDrawer} />
-            <ReportBug className="py-3 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={closeDrawer} />
+            <Support className="py-3 hover:bg-gray-100 dark:hover:bg-gray-800" onClick={closeDrawer} />
           </div>
           <div className="divider" />
         </div>
