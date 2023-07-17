@@ -438,7 +438,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
   }`;
 
   // Get all rounds that have ended in the last week
-  const unixNow = Math.floor(Date.now() / 1000 - 60 * 60 * 24 * 7).toString();
+  const unixNow = Math.floor(Date.now() / 1000).toString();
   const variables = {
     unixTimestamp: unixNow
   };
