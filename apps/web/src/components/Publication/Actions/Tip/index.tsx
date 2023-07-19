@@ -40,7 +40,8 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
   const [showTipModal, setShowTipModal] = useState(false);
 
   const tipCount = postQuadraticTipping?.votes.length || 0;
-  const roundOpen = roundInfo?.roundOpen || false;
+  // const roundOpen = roundInfo?.roundOpen || false;
+  const roundOpen = false;
   const currentUserTippedPublication = postQuadraticTipping?.votes.some(
     (vote) => vote.from === address?.toLowerCase()
   );
@@ -50,9 +51,9 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
 
   return (
     <>
-      <div className="flex items-center space-x-1 text-red-500">
+      <div className="flex items-center space-x-1 text-red-200">
         <motion.button
-          disabled={!roundOpen || address === undefined}
+          disabled={true}
           whileTap={{ scale: 0.9 }}
           onClick={() => {
             setShowTipModal(true);
