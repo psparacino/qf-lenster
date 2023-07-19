@@ -40,20 +40,20 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
   const [showTipModal, setShowTipModal] = useState(false);
 
   const tipCount = postQuadraticTipping?.votes.length || 0;
-  // const roundOpen = roundInfo?.roundOpen || false;
-  const roundOpen = false;
+  const roundOpen = roundInfo?.roundOpen || false;
   const currentUserTippedPublication = postQuadraticTipping?.votes.some(
     (vote) => vote.from === address?.toLowerCase()
   );
 
-  const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
+  // const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
+  const textColor = 'text-red-200';
   const { pending, status } = useAccountHasVotePending(publication.id);
 
   return (
     <>
-      <div className="flex items-center space-x-1 text-red-200">
+      <div className="flex items-center space-x-1 text-red-500">
         <motion.button
-          disabled={true}
+          disabled={!roundOpen || address === undefined}
           whileTap={{ scale: 0.9 }}
           onClick={() => {
             setShowTipModal(true);
@@ -79,9 +79,9 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
               >
                 <div className="flex">
                   {currentUserTippedPublication ? (
-                    <TipsSolidIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
+                    <TipsSolidIcon color={'#FECACA'} />
                   ) : (
-                    <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
+                    <TipsOutlineIcon color={'#FECACA'} />
                   )}
                 </div>
               </Tooltip>

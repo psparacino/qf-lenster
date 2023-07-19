@@ -1,7 +1,6 @@
 import { PendingVoteContext } from '@components/Common/Providers/PendingVotesProvider';
 import Markup from '@components/Shared/Markup';
 import Uniswap from '@components/Shared/UniswapTip';
-import { formatDecimals } from '@components/utils/formatDecimals';
 import { getTokenName } from '@components/utils/getTokenName';
 import { ClockIcon, MinusIcon, PuzzleIcon, UsersIcon, ViewGridAddIcon } from '@heroicons/react/outline';
 import { CheckCircleIcon } from '@heroicons/react/solid';
@@ -328,11 +327,11 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
                 placeholder={`Tip amount in ${getTokenName(roundInfo.token)}`}
                 value={inputValue}
                 onChange={handleChange}
-                disabled={isLoading || writeLoading}
+                disabled={isLoading || writeLoading || true}
               />
               <Button
                 onClick={roundContractAllowed ? () => write() : () => handleAllowance()}
-                disabled={isLoading || tipAmount === '0' || isFetchingMatchPreview}
+                disabled={isLoading || tipAmount === '0' || isFetchingMatchPreview || true}
                 icon={
                   isLoading || transactionLoading || writeLoading || roundContractAllowancePending ? (
                     <Spinner size="xs" />
@@ -348,29 +347,41 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
 
             <Card
               as="aside"
-              className="!bg-brand-300 border-brand-400 text-brand-600 mt-4 space-y-2.5 !bg-opacity-20 px-5 py-3"
+              className="mt-4 space-y-2.5 border-red-400 !bg-red-300 !bg-opacity-20 px-5 py-3 text-red-600"
             >
-              {isFetchingMatchPreview ? (
-                <div className="flex w-full items-center">
-                  Estimating
-                  <Spinner size="sm" className="ml-2" variant="primary" />
-                </div>
-              ) : (
-                <span>
-                  {!isErrorMatchPreview ? (
-                    <>
-                      Estimated matching for tip:{' '}
-                      <b>
-                        {formatDecimals(matchPreview?.differenceMatchAmountInToken || 0)}{' '}
-                        {getTokenName(roundInfo.token)}
-                      </b>
-                    </>
-                  ) : (
-                    'Error estimating matching'
-                  )}
+              Tipping has been temporarily disabled. Please follow{' '}
+              <Link href={'/u/quadraticlenster'}>
+                <span className="from-brand-600 dark:from-brand-400 bg-gradient-to-r to-pink-600 bg-clip-text font-bold text-transparent dark:to-pink-400">
+                  @quadraticlenster
                 </span>
-              )}
+              </Link>{' '}
+              for updates.
             </Card>
+            {/*<Card*/}
+            {/*  as="aside"*/}
+            {/*  className="!bg-brand-300 border-brand-400 text-brand-600 mt-4 space-y-2.5 !bg-opacity-20 px-5 py-3"*/}
+            {/*>*/}
+            {/*  {isFetchingMatchPreview ? (*/}
+            {/*    <div className="flex w-full items-center">*/}
+            {/*      Estimating*/}
+            {/*      <Spinner size="sm" className="ml-2" variant="primary" />*/}
+            {/*    </div>*/}
+            {/*  ) : (*/}
+            {/*    <span>*/}
+            {/*      {!isErrorMatchPreview ? (*/}
+            {/*        <>*/}
+            {/*          Estimated matching for tip:{' '}*/}
+            {/*          <b>*/}
+            {/*            {formatDecimals(matchPreview?.differenceMatchAmountInToken || 0)}{' '}*/}
+            {/*            {getTokenName(roundInfo.token)}*/}
+            {/*          </b>*/}
+            {/*        </>*/}
+            {/*      ) : (*/}
+            {/*        'Error estimating matching'*/}
+            {/*      )}*/}
+            {/*    </span>*/}
+            {/*  )}*/}
+            {/*</Card>*/}
             <Card
               as="aside"
               className="mt-2 space-y-2.5 border-green-400 !bg-green-300 !bg-opacity-20 px-5 py-3 text-green-600"
