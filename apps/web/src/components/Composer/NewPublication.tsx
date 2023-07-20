@@ -244,7 +244,9 @@ const NewPublication: FC<NewPublicationProps> = ({ publication }) => {
       if (chain) {
         const now = Math.floor(Date.now() / 1000);
 
-        const rounds = await getCurrentActiveRounds(chain.id, now);
+        let rounds = await getCurrentActiveRounds(chain.id, now);
+
+        rounds = rounds.filter((round) => round.id !== '0xa2ae8421776035c398c22e143290697da09d19d7');
 
         for (const round of rounds) {
           const endTime = new Date(round.roundEndTime * 1000);
