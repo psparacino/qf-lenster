@@ -23,7 +23,6 @@ import Link from 'next/link';
 import type { Dispatch, FC } from 'react';
 import { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { extendedRounds } from 'src/constants';
 import { useAppStore } from 'src/store/app';
 import { Button, Card, Spinner, WarningMessage } from 'ui';
 import {
@@ -71,6 +70,7 @@ interface RoundInfo {
 }
 
 const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModal, tipTotal, tipCount }) => {
+  console.log('round address inside tipping', roundAddress);
   const currentProfile = useAppStore((state) => state.currentProfile);
 
   const [roundContractAllowancePending, setRoundContractAllowancePending] = useState(false);
@@ -106,8 +106,7 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     async function fetchRoundInfo(roundAddress: string) {
       if (chain) {
         try {
-          const extendedRoundId = extendedRounds[roundAddress] || roundAddress;
-          const round = await getRoundInfo(chain.id, extendedRoundId);
+          const round = await getRoundInfo(chain.id, roundAddress);
           if (round) {
             const metadata = await getRoundMetadata(chain.id, round.roundMetaPtr.pointer);
             const updatedRoundInfo = { ...round, metadata };
@@ -333,7 +332,13 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
                 disabled={isLoading || writeLoading}
               />
               <Button
-                onClick={roundContractAllowed ? () => write() : () => handleAllowance()}
+                onClick={() => {
+                  if (roundContractAllowed) {
+                    write();
+                  } else {
+                    handleAllowance();
+                  }
+                }}
                 disabled={isLoading || tipAmount === '0' || isFetchingMatchPreview}
                 icon={
                   isLoading || transactionLoading || writeLoading || roundContractAllowancePending ? (

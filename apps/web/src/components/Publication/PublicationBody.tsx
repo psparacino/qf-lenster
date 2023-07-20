@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { Dispatch, FC, SetStateAction } from 'react';
 import { useEffect } from 'react';
+import { getNewRoundByExtendedRound } from 'src/constants';
 
 import DecryptedPublicationBody from './DecryptedPublicationBody';
 
@@ -53,7 +54,7 @@ const PublicationBody: FC<PublicationBodyProps> = ({ publication, roundAddress, 
         console.log('No Ethereum address found');
       }
 
-      return match ? match[2] : null;
+      return match ? getNewRoundByExtendedRound(match[2]) : null;
     }
     if (
       content &&

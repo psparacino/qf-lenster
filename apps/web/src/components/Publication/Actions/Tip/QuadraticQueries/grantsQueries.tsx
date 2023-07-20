@@ -316,6 +316,7 @@ export async function getPostQuadraticTipping(chainId: number, pubId: string, ro
   const data = (await fetchGraphQL(chainId, query, variables)) as {
     quadraticTipping: PostQuadraticTippingData;
   };
+
   return data.quadraticTipping;
 }
 
@@ -327,7 +328,20 @@ export function useGetPostQuadraticTipping(roundAddress: string | undefined, pub
       if (!roundAddress) {
         return null;
       }
-      return getPostQuadraticTipping(chainId, pubId, roundAddress);
+
+      if (!extendedRounds[roundAddress]) {
+        return getPostQuadraticTipping(chainId, pubId, roundAddress);
+      }
+
+      return Promise.all([
+        getPostQuadraticTipping(chainId, pubId, extendedRounds[roundAddress]),
+        getPostQuadraticTipping(chainId, pubId, roundAddress)
+      ]).then(([oldVotes, newVotes]) => {
+        return {
+          ...newVotes,
+          votes: [...newVotes.votes, ...oldVotes.votes]
+        };
+      });
     },
     {
       select: (data) => {
