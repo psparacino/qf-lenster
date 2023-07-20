@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import { BigNumber } from 'ethers';
 import { formatEther, parseUnits } from 'ethers/lib/utils';
 import { useContext, useEffect, useState } from 'react';
-import { POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
+import { extendedRounds, POLYGON_MAINNET, POLYGON_MUMBAI } from 'src/constants';
 import { useAccount, useChainId } from 'wagmi';
 
 import { decodePublicationId, encodePublicationId } from '../utils';
@@ -316,6 +316,7 @@ export async function getPostQuadraticTipping(chainId: number, pubId: string, ro
   const data = (await fetchGraphQL(chainId, query, variables)) as {
     quadraticTipping: PostQuadraticTippingData;
   };
+
   return data.quadraticTipping;
 }
 
@@ -327,7 +328,20 @@ export function useGetPostQuadraticTipping(roundAddress: string | undefined, pub
       if (!roundAddress) {
         return null;
       }
-      return getPostQuadraticTipping(chainId, pubId, roundAddress);
+
+      if (!extendedRounds[roundAddress]) {
+        return getPostQuadraticTipping(chainId, pubId, roundAddress);
+      }
+
+      return Promise.all([
+        getPostQuadraticTipping(chainId, pubId, extendedRounds[roundAddress]),
+        getPostQuadraticTipping(chainId, pubId, roundAddress)
+      ]).then(([oldVotes, newVotes]) => {
+        return {
+          ...newVotes,
+          votes: [...newVotes.votes, ...oldVotes.votes]
+        };
+      });
     },
     {
       select: (data) => {
@@ -456,6 +470,10 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
       const roundStatsByRound: Record<string, RoundStats> = {};
 
       for (const round of data.quadraticTippings) {
+        // Skip extended rounds
+        if (Object.values(extendedRounds).includes(round.id)) {
+          continue;
+        }
         let tippedInRound = BigNumber.from(0);
         const tippersInRound = new Set<string>();
         const postsInRound = new Set<string>();
@@ -467,7 +485,17 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
           }
         > = {};
 
-        for (const vote of round.votes) {
+        let allVotes = [...round.votes];
+
+        const extendedRound = data.quadraticTippings.find((r: any) => r.id === extendedRounds[round.id]);
+
+        if (extendedRound) {
+          const votesExtendedRound = extendedRound.votes;
+
+          allVotes = allVotes.concat([...votesExtendedRound]);
+        }
+
+        for (const vote of allVotes) {
           tippersDictionary.add(vote.from);
           tippersInRound.add(vote.from);
           postsInRound.add(vote.projectId);
@@ -497,10 +525,10 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
           }))
           .sort((a, b) => Number(b.totalTippedInToken) - Number(a.totalTippedInToken));
 
-        const matchedInRound = formatEther(round.matchAmount);
+        const matchedInRound = formatEther(extendedRound?.matchAmount || round.matchAmount);
 
         roundStatsByRound[round.id] = {
-          matchAmount: round.matchAmount,
+          matchAmount: extendedRound?.matchAmount || round.matchAmount,
           token: round.round.token,
           totalMatched: matchedInRound,
           totalTipped: formatEther(tippedInRound),
@@ -509,7 +537,7 @@ export const useQueryQFRoundStats = ({ refetchInterval }: { refetchInterval?: nu
           averageTip: round.votes.length ? formatEther(tippedInRound.div(round.votes.length)) : '0',
           averageTipsPerPost: round.votes.length ? (round.votes.length / postsInRound.size).toString() : '0',
           posts: formattedPosts,
-          roundMetaPtr: round.round.roundMetaPtr.pointer,
+          roundMetaPtr: extendedRound?.round.roundMetaPtr.pointer || round.round.roundMetaPtr.pointer,
           roundStartTime: Number(round.round.roundStartTime),
           roundEndTime: Number(round.round.roundEndTime)
         };

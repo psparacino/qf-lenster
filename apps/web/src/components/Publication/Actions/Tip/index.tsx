@@ -13,6 +13,7 @@ import nFormatter from 'lib/nFormatter';
 import dynamic from 'next/dynamic';
 import type { FC } from 'react';
 import React, { useState } from 'react';
+import { getNewRoundByExtendedRound } from 'src/constants';
 import { Modal, Spinner, Tooltip } from 'ui';
 import { useAccount } from 'wagmi';
 
@@ -31,7 +32,8 @@ interface TipProps {
   roundAddress: string;
 }
 
-const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
+const Tip: FC<TipProps> = ({ publication, roundAddress: _roundAddress }) => {
+  const roundAddress = getNewRoundByExtendedRound(_roundAddress);
   const { data: matchingData } = useGetPublicationMatchData(roundAddress, publication.id);
   const { data: postQuadraticTipping } = useGetPostQuadraticTipping(roundAddress, publication.id);
   const { data: roundInfo } = useGetRoundInfo(roundAddress);
@@ -45,8 +47,7 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
     (vote) => vote.from === address?.toLowerCase()
   );
 
-  // const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
-  const textColor = 'text-red-200';
+  const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
   const { pending, status } = useAccountHasVotePending(publication.id);
 
   return (
@@ -79,9 +80,9 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
               >
                 <div className="flex">
                   {currentUserTippedPublication ? (
-                    <TipsSolidIcon color={'#FECACA'} />
+                    <TipsSolidIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
                   ) : (
-                    <TipsOutlineIcon color={'#FECACA'} />
+                    <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
                   )}
                 </div>
               </Tooltip>
