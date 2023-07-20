@@ -22,6 +22,7 @@ import Link from 'next/link';
 import type { Dispatch, FC } from 'react';
 import { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { extendedRounds } from 'src/constants';
 import { useAppStore } from 'src/store/app';
 import { Button, Card, Spinner, WarningMessage } from 'ui';
 import {
@@ -104,7 +105,8 @@ const Tipping: FC<Props> = ({ address, publication, roundAddress, setShowTipModa
     async function fetchRoundInfo(roundAddress: string) {
       if (chain) {
         try {
-          const round = await getRoundInfo(chain.id, roundAddress);
+          const extendedRoundId = extendedRounds[roundAddress] || roundAddress;
+          const round = await getRoundInfo(chain.id, extendedRoundId);
           if (round) {
             const metadata = await getRoundMetadata(chain.id, round.roundMetaPtr.pointer);
             const updatedRoundInfo = { ...round, metadata };
