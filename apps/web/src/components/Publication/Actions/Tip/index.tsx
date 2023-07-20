@@ -45,8 +45,7 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
     (vote) => vote.from === address?.toLowerCase()
   );
 
-  // const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
-  const textColor = 'text-red-200';
+  const textColor = roundOpen && address !== undefined ? 'text-red-500' : 'text-red-200';
   const { pending, status } = useAccountHasVotePending(publication.id);
 
   return (
@@ -79,9 +78,9 @@ const Tip: FC<TipProps> = ({ publication, roundAddress }) => {
               >
                 <div className="flex">
                   {currentUserTippedPublication ? (
-                    <TipsSolidIcon color={'#FECACA'} />
+                    <TipsSolidIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
                   ) : (
-                    <TipsOutlineIcon color={'#FECACA'} />
+                    <TipsOutlineIcon color={roundOpen && address !== undefined ? '#EF4444' : '#FECACA'} />
                   )}
                 </div>
               </Tooltip>
